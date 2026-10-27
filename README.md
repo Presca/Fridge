@@ -6,8 +6,10 @@ with, and get a quick recipe that uses up what's about to spoil.
 - **Fridge**: tap ingredients to pick them; hold any tile to edit amounts (iOS-style wobble). Items at
   zero move to **Finished**. **Use soon** appears only when something is close to spoiling.
 - **Scan**: photo of your shopping, or type/dictate a list. You review every item before it's added.
-- **Cook**: craving, people eating, time you have → a recipe built from what's actually in the fridge.
-  "Cook this" deducts the amounts. Short on something? It offers swaps from the same food group.
+- **Cook**: pick ingredients, tap **Cook**, then choose your craving (or Surprise me), people eating and
+  time you have. You get three quick recipe ideas built from what's actually in the fridge, plus any
+  saved recipes that fit. "Cook this" deducts the amounts. Short on something? It offers swaps from the
+  same food group.
 - **Recipes**: save generated recipes, or paste a recipe, link or Instagram caption.
 
 ## What runs where

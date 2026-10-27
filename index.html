@@ -252,7 +252,7 @@ const DAY = 86400000;
 const st = {
   items: [], recipes: [], servings: 2, loaded: false,
   screen: 'fridge', mode: 'select', filter: 'all', selected: {}, flavour: null, time: 20,
-  recipe: null, shown: [], rtab: 'saved', toast: null, sheet: null, busy: null, err: null,
+  recipe: null, options: null, recipeBack: null, shown: [], rtab: 'saved', toast: null, sheet: null, busy: null, err: null,
   scan: { files: [], preview: null, detected: null }, ai: null, canImage: false, db: null, synced: false
 };
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -403,22 +403,27 @@ async function generate(excludeNames) {
   const sel = selIds();
   const flav = st.flavour || 'surprise';
   st.busy = 'gen'; st.err = null; st.screen = 'gen'; render();
-  const prompt = `You are planning ONE home-cooked meal from a fridge inventory.
+  const prompt = `You are suggesting 3 different home-cooked meals from a fridge inventory. Make them clearly different from each other (different dishes and cooking styles).
 FRIDGE (only use these; never exceed the amounts listed):
 ${fridgeText()}
 PICKED (must feature these): ${sel.length ? sel.map(id => item(id).name).join(', ') : 'none — you choose, prefer USE SOON items'}
 Seasoning from the fridge may be added freely even if not picked. People eating: ${st.servings}. Max cooking time: ${st.time} min. Flavour: ${flav === 'surprise' ? 'anything, be varied' : flav}.
+Keep each one quick and easy: few steps, simple techniques, within the time limit.
 Aim for a balanced plate (a protein, a carb, a vegetable/fibre) using what is there; prefer USE SOON items.
 ${excludeNames && excludeNames.length ? 'Do NOT suggest these again: ' + excludeNames.join('; ') + '.' : ''}
-Reply with ONLY one JSON object: {"name": dish name (max 5 words), "time": minutes (number), "flavour": one of ["spicy","comfort","fresh","umami","cheesy","surprise"], "hero": one of ${JSON.stringify(KEYS)} (the main ingredient), "uses": {"<fridge id>": amount as a number in that item's own unit, scaled for ${st.servings} people}, "steps": 3 to 5 short imperative steps (max 12 words each), "nutrients": {"protein": true|false, "carbs": true|false, "fibre": true|false}}`;
+Reply with ONLY a JSON array of 3 objects, each: {"name": dish name (max 5 words), "time": minutes (number), "flavour": one of ["spicy","comfort","fresh","umami","cheesy","surprise"], "hero": one of ${JSON.stringify(KEYS)} (the main ingredient), "uses": {"<fridge id>": amount as a number in that item's own unit, scaled for ${st.servings} people}, "steps": 3 to 5 short imperative steps (max 12 words each), "nutrients": {"protein": true|false, "carbs": true|false, "fibre": true|false}}`;
   try {
-    const r = await st.ai.json(prompt, { cache: false });
-    const uses = {};
-    Object.keys(r.uses || {}).forEach(k => { const it = item(k); const n = Number(r.uses[k]); if (it && n > 0) uses[k] = Math.min(it.qty, Math.max(stepOf(it) / 2, Math.round(n * 10) / 10)); });
-    st.recipe = { id: 'g-' + Date.now(), name: String(r.name || 'Something tasty').slice(0, 60), time: Number(r.time) || st.time, flavour: FLAV.some(f => f.id === r.flavour) ? r.flavour : flav, hero: ICONS[r.hero] ? r.hero : (sel[0] ? iconOf(item(sel[0])) : 'rice'), uses, steps: (Array.isArray(r.steps) ? r.steps : []).slice(0, 6).map(String), nutrients: r.nutrients || {}, servings: st.servings, src: 'generated' };
-    st.shown.push(st.recipe.name);
-    st.screen = 'recipe';
-  } catch (e) { st.err = aiErr(e); st.screen = 'craving'; }
+    const out = await st.ai.json(prompt, { cache: false });
+    const list = (Array.isArray(out) ? out : [out]).filter(r => r && typeof r === 'object').slice(0, 3);
+    if (!list.length) throw { code: 'invalid_json' };
+    st.options = list.map((r, n) => {
+      const uses = {};
+      Object.keys(r.uses || {}).forEach(k => { const it = item(k); const q = Number(r.uses[k]); if (it && q > 0) uses[k] = Math.min(it.qty, Math.max(stepOf(it) / 2, Math.round(q * 10) / 10)); });
+      return { id: 'g-' + Date.now() + '-' + n, name: String(r.name || 'Something tasty').slice(0, 60), time: Number(r.time) || st.time, flavour: FLAV.some(f => f.id === r.flavour) ? r.flavour : flav, hero: ICONS[r.hero] ? r.hero : (sel[0] ? iconOf(item(sel[0])) : 'rice'), uses, steps: (Array.isArray(r.steps) ? r.steps : []).slice(0, 6).map(String), nutrients: r.nutrients || {}, servings: st.servings, src: 'generated' };
+    });
+    st.options.forEach(o => st.shown.push(o.name));
+    st.screen = 'options';
+  } catch (e) { st.err = aiErr(e); st.screen = excludeNames && excludeNames.length && st.options ? 'options' : 'craving'; }
   st.busy = null; render();
 }
 async function importRecipe(text) {
@@ -450,6 +455,20 @@ function usesFromSaved(rec) {
   return uses;
 }
 function matchPct(rec) { if (!rec.ingredients || !rec.ingredients.length) return 0; const have = rec.ingredients.filter(g => matchIngredient(g.name)).length; return Math.round(have / rec.ingredients.length * 100); }
+
+function savedMatches() {
+  const sel = selIds();
+  return st.recipes.filter(r => r.ingredients && r.ingredients.length).map(r => {
+    const hits = sel.filter(id => r.ingredients.some(g => matchIngredient(g.name) === item(id))).length;
+    return { r, hits, pct: matchPct(r) };
+  }).filter(m => m.pct >= 50 && (!sel.length || m.hits > 0))
+    .sort((a, b) => (b.hits - a.hits) || (b.pct - a.pct) || ((st.flavour && b.r.flavour === st.flavour) - (st.flavour && a.r.flavour === st.flavour)))
+    .slice(0, 3);
+}
+function ringHtml(pct) {
+  const dash = Math.round(132 - 132 * pct / 100); const col = pct === 100 ? 'var(--mint)' : pct >= 60 ? 'var(--sun)' : '#FF6A8E';
+  return `<div class="ring"><svg width="52" height="52" viewBox="0 0 52 52" aria-hidden="true"><circle cx="26" cy="26" r="21" fill="none" stroke="var(--sunk)" stroke-width="6"/><circle class="v" cx="26" cy="26" r="21" fill="none" stroke="${col}" stroke-width="6" stroke-linecap="round" stroke-dasharray="132" stroke-dashoffset="${dash}" transform="rotate(-90 26 26)"/></svg><span>${pct}%</span></div>`;
+}
 
 // ───────────────────────── UI helpers ─────────────────────────
 let toastT = null;
@@ -485,24 +504,44 @@ function viewFridge() {
   }
   // bottom stack: gaps + CTA
   let stack = '';
-  if (!edit && !fin && st.items.length && st.ai) {
+  if (!edit && !fin && st.items.length) {
     const haveCats = sel.map(id => catOf(item(id).cat));
     const missing = sel.length ? ['protein', 'carbs', 'fibre'].filter(c => !haveCats.includes(c)) : [];
     const gapItems = [];
     missing.forEach(c => st.items.filter(i => catOf(i.cat) === c && i.qty > 0 && !st.selected[i.id]).sort((a, b) => daysLeft(a) - daysLeft(b)).slice(0, 2).forEach(i => gapItems.push({ i, c })));
     if (gapItems.length) stack += `<div class="card" style="display:flex;flex-direction:column;gap:8px"><div class="row" style="font-size:13px;color:var(--muted)">${SVG.info}Missing ${missing.map(c => `<span class="spill" style="height:26px;font-size:12px;padding:0 8px;background:${CATS[c].bg};color:#2A1F1A"><span class="dot" style="width:7px;height:7px;border-radius:50%;background:${CATS[c].color};display:block"></span>${CATS[c].label}</span>`).join('')}</div><div class="hrow">${gapItems.map(({ i, c }) => `<button class="mini" style="background:${CATS[c].bg};color:#2A1F1A;outline:2px solid ${CATS[c].color};outline-offset:-2px;height:44px" data-act="pick" data-id="${i.id}">${icon(iconOf(i))}${esc(i.name)}${daysLeft(i) <= 2 ? `<span class="tag" style="background:var(--sun)">${daysLabel(daysLeft(i))}</span>` : ''}${SVG.plusS}</button>`).join('')}</div></div>`;
-    stack += `<button class="cta ink" data-act="craving"><span class="num">${sel.length}</span>${sel.length ? 'Next' : 'Surprise me'}${SVG.arrow}</button>`;
+    stack += sel.length
+      ? `<button class="cta ink" data-act="craving">${SVG.flame.replace('width="16" height="16"', 'width="24" height="24"')}Cook<span class="num">${sel.length}</span>${SVG.arrow}</button>`
+      : `<button class="cta ink" data-act="craving">${icon('dice', 'ic').replace('class="ic"', 'style="width:30px;height:30px"')}Surprise me${SVG.arrow}</button>`;
   }
   return h + (stack ? `<div class="stack">${stack}</div>` : '') + nav('fridge');
 }
 function viewCraving() {
   let h = `<div class="head"><div class="hl"><button class="round" data-act="go" data-to="fridge" aria-label="Back">${SVG.back}</button><h1>Craving?</h1></div></div>`;
   if (st.err) h += `<div class="err" style="margin-bottom:12px">${esc(st.err)}</div>`;
+  const sel = selIds();
+  h += sel.length
+    ? `<div class="hrow" style="margin-bottom:14px">${sel.map(id => { const it = item(id); return `<div class="mini" style="background:${CATS[catOf(it.cat)].bg};color:#2A1F1A;box-shadow:none">${icon(iconOf(it))}${esc(it.name)}</div>`; }).join('')}</div>`
+    : `<div class="card row" style="margin-bottom:14px;gap:10px">${icon('dice', 'ic').replace('class="ic"', 'style="width:40px;height:40px;flex-shrink:0"')}<span style="font-size:14px">I'll pick from your fridge, starting with what's about to spoil.</span></div>`;
   h += `<div class="grid" style="grid-template-columns:repeat(2,minmax(0,1fr));gap:12px">${FLAV.map((f, i) => `<button class="crav ${st.flavour === f.id ? 'on' : ''}" style="animation-delay:${i * 45}ms;${st.flavour === f.id ? 'background:' + HERO_BG[f.icon] + ';color:#2A1F1A' : ''}" data-act="flav" data-id="${f.id}" aria-pressed="${st.flavour === f.id}">${icon(f.icon)}${f.label}</button>`).join('')}</div>`;
   h += `<div class="card row" style="margin-top:18px"><div class="people">${Array.from({ length: 6 }, (_, k) => SVG.person(k < st.servings ? '#FFC53D' : 'var(--sunk)')).join('')}</div><span class="ff" style="font-size:17px">${st.servings} ${st.servings === 1 ? 'person' : 'people'}</span><div class="row" style="margin-left:auto;gap:6px"><button class="round" style="width:40px;height:40px;background:var(--tint-orange);box-shadow:none" data-act="people" data-d="-1" aria-label="Fewer people">${SVG.minus}</button><button class="round" style="width:40px;height:40px;background:var(--tint-mint);box-shadow:none" data-act="people" data-d="1" aria-label="More people">${SVG.plusS}</button></div></div>`;
   h += `<div style="margin-top:20px"><div class="row" style="margin-bottom:10px">${SVG.clock}<span class="ff" style="font-size:17px">Time I have</span><span class="sub" style="margin-left:auto;font-size:14px">${st.time} min</span></div><div class="row" style="gap:8px">${TIMES.map(t => `<button class="timec ${st.time === t ? 'on' : ''}" data-act="time" data-t="${t}">${t} min</button>`).join('')}</div></div>`;
-  h += `<div class="stack"><button class="cta prime pulse" data-act="cook">${SVG.flame.replace('width="16" height="16"', 'width="24" height="24"')}Cook it</button></div>`;
+  const saved = savedMatches();
+  if (saved.length) h += `<div style="margin-top:22px"><div class="row" style="margin-bottom:10px">${SVG.book}<span class="ff" style="font-size:17px">From your recipes</span></div><div style="display:flex;flex-direction:column;gap:10px">${saved.map(({ r, pct }, i) => `<div class="card rcard" style="animation:rise .4s both;animation-delay:${i * 40}ms"><div class="thumb" style="background:${HERO_BG[r.hero] || '#FFF4DD'}">${icon(r.hero)}</div><div style="flex:1;min-width:0"><div class="ff" style="font-size:16px;line-height:1.1">${esc(r.name)}</div><div class="row" style="gap:6px;margin-top:6px;font-size:12px;color:var(--muted)">${SVG.clock}${r.time} min</div></div>${ringHtml(pct)}<button class="round accent" style="width:44px;height:44px" data-act="openrecipe" data-id="${r.id}" data-from="craving" aria-label="Open ${esc(r.name)}">${SVG.arrow}</button></div>`).join('')}</div></div>`;
+  h += `<div style="height:${st.ai ? 90 : 170}px"></div>`;
+  h += st.ai
+    ? `<div class="stack"><button class="cta prime pulse" data-act="cook">${SVG.flame.replace('width="16" height="16"', 'width="24" height="24"').replace('fill="#FF7A45"', 'fill="#2A1F1A"')}Show me recipes</button></div>`
+    : `<div class="stack"><div class="card warm"><div class="ff" style="font-size:16px">New recipe ideas need AI</div><p class="note" style="margin:4px 0 0;color:inherit">${CFG.workerUrl ? 'Enter your passcode in Settings to turn it on.' : 'Set up the Fridge Worker first (see the README).'}${saved.length ? ' Your saved recipes above still work.' : ''}</p></div>${CFG.workerUrl ? `<button class="cta prime" data-act="settings">Open Settings</button>` : ''}</div>`;
   return h + nav('fridge');
+}
+function viewOptions() {
+  if (!st.options || !st.options.length) { st.screen = 'craving'; return viewCraving(); }
+  let h = `<div class="head"><div class="hl"><button class="round" data-act="go" data-to="craving" aria-label="Back">${SVG.back}</button><h1>Pick one</h1></div></div>`;
+  if (st.err) h += `<div class="err" style="margin-bottom:12px">${esc(st.err)}</div>`;
+  h += `<div style="display:flex;flex-direction:column;gap:12px">${st.options.map((r, i) => { const its = Object.keys(r.uses).map(item).filter(Boolean); return `<button class="card rcard" style="text-align:left;width:100%;animation:pop .5s cubic-bezier(.34,1.56,.64,1) both;animation-delay:${i * 90}ms" data-act="openopt" data-i="${i}"><div class="thumb" style="background:${HERO_BG[r.hero] || '#FFF4DD'}">${icon(r.hero)}</div><div style="flex:1;min-width:0"><div class="ff" style="font-size:17px;line-height:1.15">${esc(r.name)}</div><div class="row" style="gap:6px;margin-top:6px;font-size:12px;color:var(--muted)">${SVG.clock}${r.time} min · ${esc(FLAV.find(f => f.id === r.flavour)?.label || 'Tasty')}</div><div class="row" style="gap:2px;margin-top:6px">${its.slice(0, 5).map(it => icon(iconOf(it), 'ic').replace('class="ic"', 'style="width:26px;height:26px"')).join('')}${its.length > 5 ? `<span class="sub">+${its.length - 5}</span>` : ''}</div></div><span class="round accent" style="width:44px;height:44px;display:grid;place-items:center">${SVG.arrow}</span></button>`; }).join('')}</div>`;
+  h += `<div style="height:90px"></div>`;
+  h += `<div class="stack plain"><button class="cta ghost" data-act="more">${icon('dice', 'ic').replace('class="ic"', 'style="width:30px;height:30px"')}More ideas</button></div>`;
+  return h;
 }
 function viewGen() {
   return `<div class="gen"><div class="pot"><span class="steam" style="left:50px;top:10px"></span><span class="steam" style="left:76px;top:2px;animation-delay:.5s"></span><span class="steam" style="left:100px;top:12px;animation-delay:1s"></span>
@@ -514,7 +553,7 @@ function viewRecipe() {
   const r = st.recipe; if (!r) { st.screen = 'fridge'; return viewFridge(); }
   const uses = Object.keys(r.uses || {}).map(id => { const it = item(id); const need = r.uses[id]; return { it, need, short: !it || it.qty < need }; }).filter(u => u.it);
   const saved = st.recipes.some(x => x.id === r.id);
-  let h = `<div class="head"><button class="round" data-act="go" data-to="${r.src === 'generated' ? 'craving' : 'recipes'}" aria-label="Back">${SVG.back}</button><div class="row" style="gap:8px"><button class="round" data-act="saverecipe" aria-label="${saved ? 'Remove from recipes' : 'Save recipe'}">${SVG.save(saved)}</button></div></div>`;
+  let h = `<div class="head"><button class="round" data-act="go" data-to="${st.recipeBack || (r.src === 'generated' ? 'options' : 'recipes')}" aria-label="Back">${SVG.back}</button><div class="row" style="gap:8px"><button class="round" data-act="saverecipe" aria-label="${saved ? 'Remove from recipes' : 'Save recipe'}">${SVG.save(saved)}</button></div></div>`;
   h += `<div class="hero" style="background:${HERO_BG[r.hero] || '#FFF4DD'}">${icon(r.hero)}</div>`;
   h += `<h1 style="margin-top:16px;font-size:28px">${esc(r.name)}</h1>`;
   const nut = ['protein', 'carbs', 'fibre'].map(k => { const ok = !!(r.nutrients && r.nutrients[k]) || uses.some(u => catOf(u.it.cat) === k); return `<span class="spill ${ok ? '' : 'dim'}" ${ok ? `style="background:${CATS[k].bg};color:#2A1F1A;box-shadow:none"` : ''}><span class="dot" style="width:8px;height:8px;border-radius:50%;background:${ok ? CATS[k].color : '#D9CFC4'};display:block"></span>${CATS[k].label}</span>`; }).join('');
@@ -528,7 +567,7 @@ function viewRecipe() {
     h += `<div class="card warm" style="margin-top:14px"><div class="row" style="font-size:13px;color:#7A5A20;margin-bottom:8px">${SVG.swap}Running short — top up with</div><div class="hrow">${subs.length ? subs.map(s => `<button class="mini" data-act="swap" data-from="${s.from.id}" data-to="${s.x.id}">${icon(iconOf(s.x))}${esc(s.x.name)}<span class="sub">for ${esc(s.from.name)}</span></button>`).join('') : '<span style="font-size:13px;color:#7A5A20;padding:8px 4px">Nothing in the fridge covers it — shop, or cook for fewer people.</span>'}</div></div>`;
   }
   if (r.steps && r.steps.length) h += `<div style="margin-top:20px"><span class="ff" style="font-size:16px;color:var(--muted)">Steps</span><div class="steps" style="margin-top:10px">${r.steps.map((s, i) => `<div class="stepc"><span class="n" style="background:${['#FFE4D2', '#D7F5EC', '#FFF0D4'][i % 3]}">${i + 1}</span><span>${esc(s)}</span></div>`).join('')}</div></div>`;
-  h += `<div class="stack plain" style="flex-direction:row;gap:10px"><div style="display:flex;gap:10px;width:100%;max-width:448px;margin:0 auto">${r.src === 'generated' && st.ai ? `<button class="round" style="width:60px;height:60px;box-shadow:0 4px 0 var(--line)" data-act="shuffle" aria-label="Another idea">${icon('dice', 'ic').replace('class="ic"', 'style="width:36px;height:36px"')}</button>` : ''}<button class="cta prime" style="flex:1" data-act="accept">${SVG.check}Cook this</button></div></div>`;
+  h += `<div class="stack plain" style="flex-direction:row;gap:10px"><div style="display:flex;gap:10px;width:100%;max-width:448px;margin:0 auto"><button class="cta prime" style="flex:1" data-act="accept">${SVG.check}Cook this</button></div></div>`;
   return h;
 }
 function viewRecipes() {
@@ -538,7 +577,7 @@ function viewRecipes() {
   const list = st.recipes.filter(r => (st.rtab === 'saved' ? r.src !== 'insta' && r.src !== 'mine' : r.src === st.rtab));
   if (st.rtab === 'insta') h += `<div class="card dark row" style="margin-bottom:10px"><div style="flex:1"><div class="ff" style="font-size:17px">Instagram saves</div><div class="sub" style="color:inherit;opacity:.7">Share a reel to your notes, paste the caption here. Direct import isn't possible from Instagram.</div></div><button class="small" style="background:var(--accent)" data-act="importsheet">Paste</button></div>`;
   if (!list.length) h += `<div class="empty">${icon('rice')}<p>${st.rtab === 'mine' ? 'Recipes you generate and save land here.' : st.rtab === 'insta' ? 'Nothing from Instagram yet.' : 'Paste a recipe, a link, or a caption and I\'ll file it.'}</p></div>`;
-  h += `<div style="display:flex;flex-direction:column;gap:10px">${list.map((r, i) => { const pct = r.ingredients ? matchPct(r) : 100; const dash = Math.round(132 - 132 * pct / 100); const col = pct === 100 ? 'var(--mint)' : pct >= 60 ? 'var(--sun)' : '#FF6A8E'; return `<div class="card rcard" style="animation:rise .4s both;animation-delay:${i * 40}ms"><div class="thumb" style="background:${HERO_BG[r.hero] || '#FFF4DD'}">${icon(r.hero)}</div><div style="flex:1;min-width:0"><div class="ff" style="font-size:16px;line-height:1.1">${esc(r.name)}</div><div class="row" style="gap:6px;margin-top:6px;font-size:12px;color:var(--muted)">${SVG.clock}${r.time} min</div></div><div class="ring"><svg width="52" height="52" viewBox="0 0 52 52" aria-hidden="true"><circle cx="26" cy="26" r="21" fill="none" stroke="var(--sunk)" stroke-width="6"/><circle class="v" cx="26" cy="26" r="21" fill="none" stroke="${col}" stroke-width="6" stroke-linecap="round" stroke-dasharray="132" stroke-dashoffset="${dash}" transform="rotate(-90 26 26)"/></svg><span>${pct}%</span></div><button class="round accent" style="width:44px;height:44px" data-act="openrecipe" data-id="${r.id}" aria-label="Open ${esc(r.name)}">${SVG.arrow}</button></div>`; }).join('')}</div>`;
+  h += `<div style="display:flex;flex-direction:column;gap:10px">${list.map((r, i) => { const pct = r.ingredients ? matchPct(r) : 100; return `<div class="card rcard" style="animation:rise .4s both;animation-delay:${i * 40}ms"><div class="thumb" style="background:${HERO_BG[r.hero] || '#FFF4DD'}">${icon(r.hero)}</div><div style="flex:1;min-width:0"><div class="ff" style="font-size:16px;line-height:1.1">${esc(r.name)}</div><div class="row" style="gap:6px;margin-top:6px;font-size:12px;color:var(--muted)">${SVG.clock}${r.time} min</div></div>${ringHtml(pct)}<button class="round accent" style="width:44px;height:44px" data-act="openrecipe" data-id="${r.id}" aria-label="Open ${esc(r.name)}">${SVG.arrow}</button></div>`; }).join('')}</div>`;
   h += `<div style="display:flex;justify-content:center;margin-top:24px"><button class="spill" data-act="settings">${remoteOn() ? 'Synced' : 'Not synced'} · Settings</button></div>`;
   return h + nav('recipes');
 }
@@ -589,7 +628,7 @@ function sheetHtml() {
 // ───────────────────────── render ─────────────────────────
 const app = document.getElementById('app'), overlay = document.getElementById('overlay');
 function render() {
-  const v = { fridge: viewFridge, craving: viewCraving, gen: viewGen, recipe: viewRecipe, recipes: viewRecipes }[st.screen] || viewFridge;
+  const v = { fridge: viewFridge, craving: viewCraving, options: viewOptions, gen: viewGen, recipe: viewRecipe, recipes: viewRecipes }[st.screen] || viewFridge;
   app.innerHTML = v();
   overlay.innerHTML = sheetHtml() + (st.toast ? `<div class="toast" role="status"><svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="11" fill="#2FBF9B"/><path d="M7 12.5l3.5 3.5L17 9" stroke="#1E1714" stroke-width="2.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>${esc(st.toast)}</div>` : '');
 }
@@ -624,12 +663,13 @@ document.addEventListener('click', async e => {
     case 'people': st.servings = Math.min(6, Math.max(1, st.servings + Number(el.dataset.d))); persist('prefs'); break;
     case 'time': st.time = Number(el.dataset.t); break;
     case 'cook': st.shown = []; generate([]); return;
-    case 'shuffle': generate(st.shown); return;
+    case 'more': generate(st.shown); return;
+    case 'openopt': { const r = st.options && st.options[Number(el.dataset.i)]; if (!r) break; st.recipe = r; st.recipeBack = 'options'; st.screen = 'recipe'; break; }
     case 'swap': { const r = st.recipe; const from = item(el.dataset.from), to = item(el.dataset.to); const amt = Math.max(stepOf(to), Math.round((r.uses[from.id] / (from.max || r.uses[from.id])) * (to.max || to.qty) / stepOf(to)) * stepOf(to)); delete r.uses[from.id]; r.uses[to.id] = Math.min(to.qty, amt); toast(from.name + ' → ' + to.name); break; }
     case 'saverecipe': { const r = st.recipe; const i = st.recipes.findIndex(x => x.id === r.id); if (i >= 0) { st.recipes.splice(i, 1); toast('Removed'); } else { st.recipes.unshift(Object.assign({}, r, { src: 'mine', ingredients: Object.keys(r.uses).map(k => ({ name: item(k).name, qty: r.uses[k], unit: item(k).unit, cat: item(k).cat })) })); toast('Saved to Recipes'); } persist('recipes'); break; }
-    case 'accept': { const r = st.recipe; Object.keys(r.uses).forEach(k => { const it = item(k); if (it) setQty(k, it.qty - r.uses[k]); }); st.selected = {}; st.flavour = null; st.screen = 'fridge'; st.filter = 'all'; persist('items'); toast('Fridge updated'); break; }
+    case 'accept': { const r = st.recipe; Object.keys(r.uses).forEach(k => { const it = item(k); if (it) setQty(k, it.qty - r.uses[k]); }); st.selected = {}; st.flavour = null; st.options = null; st.recipeBack = null; st.screen = 'fridge'; st.filter = 'all'; persist('items'); toast('Fridge updated'); break; }
     case 'rtab': st.rtab = id; break;
-    case 'openrecipe': { const r = st.recipes.find(x => x.id === id); if (!r) break; st.recipe = Object.assign({}, r, { uses: usesFromSaved(r), servings: st.servings }); st.screen = 'recipe'; break; }
+    case 'openrecipe': { const r = st.recipes.find(x => x.id === id); if (!r) break; st.recipe = Object.assign({}, r, { uses: usesFromSaved(r), servings: st.servings }); st.recipeBack = el.dataset.from || 'recipes'; st.screen = 'recipe'; break; }
     case 'scan': st.sheet = 'scan'; st.scan = { files: [], preview: null, detected: null }; st.err = null; break;
     case 'runscan': scanPhotos(); return;
     case 'runtext': { const t = document.getElementById('scan-text'); st.scan.text = t ? t.value : ''; scanText(st.scan.text); return; }
