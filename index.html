@@ -201,6 +201,10 @@ nav.bar button.on{background:var(--tint-orange)}
 .hcard{padding:12px;display:flex;flex-direction:column}
 .hcard .thumb{width:52px;height:52px;border-radius:16px;display:grid;place-items:center;flex-shrink:0}.hcard .thumb .ic{width:40px;height:40px}
 .hcard.undone{opacity:.6}
+.optcard{gap:6px;padding:10px 8px 10px 12px}
+.optmain{flex:1;min-width:0;display:flex;align-items:center;gap:12px;text-align:left;color:inherit}
+.optside{display:flex;flex-direction:column;align-items:center;gap:3px;flex-shrink:0}
+.round.saved,.savebtn.on{background:var(--tint-mint);box-shadow:0 3px 0 var(--mint-deep)}
 .hcard .mini{font-size:12px;padding:3px 8px 3px 3px;border-radius:14px}.hcard .mini .ic{width:24px;height:24px}.hcard .mini .tag{font-size:10px;padding:1px 6px}
 .hbtn{height:36px;border-radius:18px;padding:0 14px;font-size:14px;background:var(--surface);color:var(--ink);box-shadow:0 3px 0 var(--line);outline:2px solid var(--line);outline-offset:-2px;display:inline-flex;align-items:center;gap:6px}
 .hbtn.go{background:var(--accent);color:#2A1F1A;outline:none;box-shadow:0 3px 0 var(--accent-deep)}
@@ -896,7 +900,7 @@ function viewOptions() {
   if (!st.options || !st.options.length) { st.screen = 'craving'; return viewCraving(); }
   let h = `<div class="head"><div class="hl"><button class="round" data-act="go" data-to="craving" aria-label="Back">${SVG.back}</button><h1>Pick one</h1></div></div>`;
   if (st.err) h += `<div class="err" style="margin-bottom:12px">${esc(st.err)}</div>`;
-  h += `<div style="display:flex;flex-direction:column;gap:12px">${st.options.map((r, i) => { const its = Object.keys(r.uses).map(item).filter(Boolean); return `<button class="card rcard" style="text-align:left;width:100%;animation:pop .5s cubic-bezier(.34,1.56,.64,1) both;animation-delay:${i * 90}ms" data-act="openopt" data-i="${i}"><div class="thumb" style="background:${HERO_BG[r.hero] || '#FFF4DD'}">${icon(r.hero)}</div><div style="flex:1;min-width:0"><div class="ff" style="font-size:17px;line-height:1.15">${esc(r.name)}</div><div class="row" style="gap:6px;margin-top:6px;font-size:12px;color:var(--muted)">${SVG.clock}${r.time} min · ${esc(FLAV.find(f => f.id === r.flavour)?.label || 'Tasty')}</div><div class="row" style="gap:2px;margin-top:6px">${its.slice(0, 5).map(it => icon(iconOf(it), 'ic').replace('class="ic"', 'style="width:26px;height:26px"')).join('')}${its.length > 5 ? `<span class="sub">+${its.length - 5}</span>` : ''}</div></div><span class="round accent" style="width:44px;height:44px;display:grid;place-items:center">${SVG.arrow}</span></button>`; }).join('')}</div>`;
+  h += `<div style="display:flex;flex-direction:column;gap:12px">${st.options.map((r, i) => { const its = Object.keys(r.uses).map(item).filter(Boolean); const sv = st.recipes.some(x => x.id === r.id); return `<div class="card rcard optcard" style="animation:pop .5s cubic-bezier(.34,1.56,.64,1) both;animation-delay:${i * 90}ms"><button class="optmain" data-act="openopt" data-i="${i}" aria-label="Open ${esc(r.name)}"><div class="thumb" style="background:${HERO_BG[r.hero] || '#FFF4DD'}">${icon(r.hero)}</div><div style="flex:1;min-width:0"><div class="ff" style="font-size:17px;line-height:1.15">${esc(r.name)}</div><div class="row" style="gap:6px;margin-top:6px;font-size:12px;color:var(--muted)">${SVG.clock}${r.time} min · ${esc(FLAV.find(f => f.id === r.flavour)?.label || 'Tasty')}</div><div class="row" style="gap:2px;margin-top:6px">${its.slice(0, 5).map(it => icon(iconOf(it), 'ic').replace('class="ic"', 'style="width:26px;height:26px"')).join('')}${its.length > 5 ? `<span class="sub">+${its.length - 5}</span>` : ''}</div></div></button><div class="optside"><button class="round ${sv ? 'saved' : ''}" style="width:44px;height:44px" data-act="saveopt" data-i="${i}" aria-pressed="${sv}" aria-label="${sv ? 'Remove from Mine' : 'Save to Mine'}">${SVG.save(sv)}</button><span class="sub">${sv ? 'Saved' : 'Save'}</span></div></div>`; }).join('')}</div>`;
   h += `<div style="height:90px"></div>`;
   h += `<div class="stack plain"><button class="cta ghost" data-act="more">${icon('dice', 'ic').replace('class="ic"', 'style="width:30px;height:30px"')}More ideas</button></div>`;
   return h;
@@ -1020,7 +1024,7 @@ function viewRecipe() {
     h += `<div class="card warm" style="margin-top:14px"><div class="row" style="font-size:13px;color:#7A5A20;margin-bottom:8px">${SVG.swap}Running short — top up with</div><div class="hrow">${subs.length ? subs.map(s => `<button class="mini" data-act="swap" data-from="${s.from.id}" data-to="${s.x.id}">${icon(iconOf(s.x))}${esc(s.x.name)}<span class="sub">for ${esc(s.from.name)}</span></button>`).join('') : '<span style="font-size:13px;color:#7A5A20;padding:8px 4px">Nothing in the fridge covers it — shop, or cook for fewer people.</span>'}</div></div>`;
   }
   if (r.steps && r.steps.length) h += `<div style="margin-top:20px"><span class="ff" style="font-size:16px;color:var(--muted)">Steps</span><div class="steps" style="margin-top:10px">${r.steps.map((s, i) => `<div class="stepc"><span class="n" style="background:${['#FFE4D2', '#D7F5EC', '#FFF0D4'][i % 3]}">${i + 1}</span><span>${esc(s)}</span></div>`).join('')}</div></div>`;
-  h += `<div class="stack plain" style="flex-direction:row;gap:10px"><div style="display:flex;gap:10px;width:100%;max-width:448px;margin:0 auto"><button class="cta prime" style="flex:1" data-act="accept">${SVG.check}Cook this</button></div></div>`;
+  h += `<div class="stack plain" style="flex-direction:row;gap:10px"><div style="display:flex;gap:10px;width:100%;max-width:448px;margin:0 auto"><button class="cta ghost savebtn ${saved ? 'on' : ''}" style="width:auto;padding:0 20px" data-act="saverecipe" aria-pressed="${saved}">${SVG.save(saved)}${saved ? 'Saved' : 'Save'}</button><button class="cta prime" style="flex:1" data-act="accept">${SVG.check}Cook this</button></div></div>`;
   return h;
 }
 function viewRecipes() {
@@ -1119,6 +1123,19 @@ function patchPick(id) {
   el.innerHTML = html; syncPad();
 }
 
+// Save a recipe to Mine, or remove it if it is already there. AI ideas keep their ingredients and steps.
+function toggleSave(r) {
+  if (!r) return;
+  const i = st.recipes.findIndex(x => x.id === r.id);
+  if (i >= 0) { st.recipes.splice(i, 1); toast('Removed from Mine'); }
+  else {
+    const ingredients = r.src !== 'generated' && r.ingredients ? r.ingredients : Object.keys(r.uses || {}).map(item).filter(Boolean).map(it => ({ name: it.name, qty: r.uses[it.id], unit: it.unit, cat: catOf(it.cat) }));
+    const copy = Object.assign({}, r, { src: 'mine', savedAt: Date.now(), ingredients }); delete copy.uses;
+    st.recipes.unshift(copy); toast('Saved to Mine');
+  }
+  persist('recipes');
+}
+
 // ───────────────────────── events ─────────────────────────
 let lp = null, held = false;
 function setQty(id, q) { const it = item(id); if (!it) return; it.qty = Math.max(0, Math.round(q * 10) / 10); if (it.qty === 0) delete st.selected[id]; persist('items'); }
@@ -1153,7 +1170,8 @@ document.addEventListener('click', async e => {
     case 'more': generate(st.shown); return;
     case 'openopt': { const r = st.options && st.options[Number(el.dataset.i)]; if (!r) break; st.recipe = r; st.recipeBack = 'options'; st.screen = 'recipe'; break; }
     case 'swap': { const r = st.recipe; const from = item(el.dataset.from), to = item(el.dataset.to); const amt = Math.max(stepOf(to), Math.round((r.uses[from.id] / (from.max || r.uses[from.id])) * (to.max || to.qty) / stepOf(to)) * stepOf(to)); delete r.uses[from.id]; r.uses[to.id] = Math.min(to.qty, amt); toast(from.name + ' → ' + to.name); break; }
-    case 'saverecipe': { const r = st.recipe; const i = st.recipes.findIndex(x => x.id === r.id); if (i >= 0) { st.recipes.splice(i, 1); toast('Removed'); } else { st.recipes.unshift(Object.assign({}, r, { src: 'mine', savedAt: Date.now(), ingredients: r.src !== 'generated' && r.ingredients ? r.ingredients : Object.keys(r.uses).map(k => ({ name: item(k).name, qty: r.uses[k], unit: item(k).unit, cat: item(k).cat })) })); toast('Saved to Recipes'); } persist('recipes'); break; }
+    case 'saverecipe': toggleSave(st.recipe); break;
+    case 'saveopt': { const r = st.options && st.options[Number(el.dataset.i)]; if (r) toggleSave(r); break; }
     case 'accept': startCooking(); return;
     case 'cookskip': if (st.screen === 'cooking') showCooked(); return;
     case 'cookdone': goHome(); return;
