@@ -792,14 +792,12 @@ function fridgeStack() {
     const gapItems = [];
     missing.forEach(c => st.items.filter(i => catOf(i.cat) === c && i.qty > 0 && !st.selected[i.id]).sort((a, b) => daysLeft(a) - daysLeft(b)).slice(0, 2).forEach(i => gapItems.push({ i, c })));
     if (gapItems.length) stack += `<div class="card" style="display:flex;flex-direction:column;gap:8px"><div class="row" style="font-size:13px;color:var(--muted)">${SVG.info}Missing ${missing.map(c => `<span class="spill" style="height:26px;font-size:12px;padding:0 8px;background:${CATS[c].bg};color:#2A1F1A"><span class="dot" style="width:7px;height:7px;border-radius:50%;background:${CATS[c].color};display:block"></span>${CATS[c].label}</span>`).join('')}</div><div class="hrow">${gapItems.map(({ i, c }) => `<button class="mini" style="background:${CATS[c].bg};color:#2A1F1A;outline:2px solid ${CATS[c].color};outline-offset:-2px;height:44px" data-act="pick" data-id="${i.id}">${icon(iconOf(i))}${esc(i.name)}${daysLeft(i) <= 2 ? `<span class="tag" style="background:var(--sun)">${daysLabel(daysLeft(i))}</span>` : ''}${SVG.plusS}</button>`).join('')}</div></div>`;
-    stack += sel.length
-      ? `<button class="cta ink" data-act="craving">${SVG.flame.replace('width="16" height="16"', 'width="24" height="24"')}Cook<span class="num">${sel.length}</span>${SVG.arrow}</button>`
-      : `<button class="cta ink" data-act="craving">${icon('dice', 'ic').replace('class="ic"', 'style="width:30px;height:30px"')}Surprise me${SVG.arrow}</button>`;
+    if (sel.length) stack += `<button class="cta ink" data-act="craving">${SVG.flame.replace('width="16" height="16"', 'width="24" height="24"')}Cook<span class="num">${sel.length}</span>${SVG.arrow}</button>`;
   }
   return stack;
 }
 function viewCraving() {
-  let h = `<div class="head"><div class="hl"><button class="round" data-act="go" data-to="fridge" aria-label="Back">${SVG.back}</button><h1>Craving?</h1></div></div>`;
+  let h = `<div class="head"><div class="hl"><button class="round" data-act="go" data-to="${st.cravingBack || 'fridge'}" aria-label="Back">${SVG.back}</button><h1>Craving?</h1></div></div>`;
   if (st.err) h += `<div class="err" style="margin-bottom:12px">${esc(st.err)}</div>`;
   const sel = selIds();
   h += sel.length
@@ -814,7 +812,7 @@ function viewCraving() {
   h += st.ai
     ? `<div class="stack"><button class="cta prime pulse" data-act="cook">${SVG.flame.replace('width="16" height="16"', 'width="24" height="24"').replace('fill="#FF7A45"', 'fill="#2A1F1A"')}Show me recipes</button></div>`
     : `<div class="stack"><div class="card warm"><div class="ff" style="font-size:16px">New recipe ideas need AI</div><p class="note" style="margin:4px 0 0;color:inherit">${aiOffMsg()}${saved.length ? ' Your saved recipes above still work.' : ''}</p></div>${aiFixButton()}</div>`;
-  return h + nav('fridge');
+  return h + nav(st.cravingBack || 'fridge');
 }
 function viewOptions() {
   if (!st.options || !st.options.length) { st.screen = 'craving'; return viewCraving(); }
@@ -906,6 +904,7 @@ function viewRecipes() {
   if (!list.length) h += `<div class="empty">${icon('rice')}<p>${st.rtab === 'mine' ? 'Recipes you generate and save land here.' : st.rtab === 'insta' ? 'Nothing from Instagram yet.' : 'Paste a recipe, a link, or a caption and I\'ll file it.'}</p></div>`;
   h += `<div style="display:flex;flex-direction:column;gap:10px">${list.map((r, i) => { const pct = r.ingredients ? matchPct(r) : 100; return `<div class="card rcard" style="animation:rise .4s both;animation-delay:${i * 40}ms"><div class="thumb" style="background:${HERO_BG[r.hero] || '#FFF4DD'}">${icon(r.hero)}</div><div style="flex:1;min-width:0"><div class="ff" style="font-size:16px;line-height:1.1">${esc(r.name)}</div><div class="row" style="gap:6px;margin-top:6px;font-size:12px;color:var(--muted)">${SVG.clock}${r.time} min</div></div>${ringHtml(pct)}<button class="round accent" style="width:44px;height:44px" data-act="openrecipe" data-id="${r.id}" aria-label="Open ${esc(r.name)}">${SVG.arrow}</button></div>`; }).join('')}</div>`;
   h += `<div style="display:flex;justify-content:center;margin-top:24px"><button class="spill" data-act="settings">${syncLabel()} · Settings</button></div>`;
+  if (st.items.some(i => i.qty > 0)) h += `<div style="height:80px"></div><div class="stack"><button class="cta ink" data-act="surprise">${icon('dice', 'ic').replace('class="ic"', 'style="width:30px;height:30px"')}Surprise me${SVG.arrow}</button></div>`;
   return h + nav('recipes');
 }
 function nav(on) { return `<nav class="bar" aria-label="Main"><button class="${on === 'fridge' ? 'on' : ''}" data-act="go" data-to="fridge">${SVG.fridge}Fridge</button><button class="${on === 'recipes' ? 'on' : ''}" data-act="go" data-to="recipes">${SVG.book}Recipes</button></nav>`; }
@@ -1013,7 +1012,8 @@ document.addEventListener('click', async e => {
     case 'done': st.mode = 'select'; break;
     case 'picksoon': soonList().forEach(i => { st.selected[i.id] = true; }); st.filter = 'all'; break;
     case 'go': st.screen = el.dataset.to; st.err = null; break;
-    case 'craving': st.screen = 'craving'; st.err = null; break;
+    case 'craving': st.cravingBack = 'fridge'; st.screen = 'craving'; st.err = null; break;
+    case 'surprise': st.selected = {}; st.cravingBack = 'recipes'; st.screen = 'craving'; st.err = null; break;
     case 'flav': st.flavour = st.flavour === id ? null : id; break;
     case 'people': st.servings = Math.min(6, Math.max(1, st.servings + Number(el.dataset.d))); persist('prefs'); break;
     case 'time': st.time = Number(el.dataset.t); break;
