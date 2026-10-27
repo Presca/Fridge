@@ -41,7 +41,8 @@ button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-vis
 input,textarea,select{font-family:inherit;font-weight:700;color:var(--ink);background:var(--surface);border:2px solid var(--line);border-radius:14px;padding:12px 14px;font-size:16px;width:100%}
 textarea{min-height:110px;resize:vertical}
 .ff{font-family:var(--display);font-weight:600}
-#app{max-width:480px;margin:0 auto;min-height:100%;position:relative;display:flex;flex-direction:column;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:calc(12px + env(safe-area-inset-top,0px)) 120px}
+#app{max-width:480px;margin:0 auto;min-height:100%;position:relative;display:flex;flex-direction:column;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:calc(12px + env(safe-area-inset-top,0px)) 120px;transition:opacity .3s ease}
+#app.leaving{opacity:0}
 h1{margin:0;font-family:var(--display);font-weight:600;font-size:34px;letter-spacing:-.5px;line-height:1;text-wrap:balance}
 .sub{font-size:12px;color:var(--muted);white-space:nowrap}
 .head{display:flex;align-items:center;justify-content:space-between;padding:8px 0 10px;gap:10px}
@@ -160,9 +161,10 @@ nav.bar button.on{background:var(--tint-orange)}
 @keyframes spark{0%,100%{transform:scale(.6) rotate(0);opacity:.3}50%{transform:scale(1.1) rotate(20deg);opacity:1}}
 .spark{animation:spark 1.4s ease-in-out infinite}
 .calm .tile:not(.edit),.calm .crav,.calm .rcard,.calm .people svg{animation:none}
-.cookscene{position:relative;height:380px;margin-top:10px}
+.cookscene{position:relative;height:380px;margin-top:34px}
+.wokwrap .steam{animation-fill-mode:both}
 .board{position:absolute;top:10px;left:4%;right:4%;height:92px;border-radius:24px;background:var(--wood);box-shadow:inset 0 -5px 0 var(--wood-deep)}
-.ing{position:absolute;top:28px;left:calc(var(--p) * 100%);width:56px;height:56px;margin-left:-28px;z-index:2;animation:fly .62s cubic-bezier(.45,0,.65,1) var(--fly) forwards}
+.ing{position:absolute;top:28px;left:calc(var(--p) * 100%);width:56px;height:56px;margin-left:-28px;z-index:2;animation:fly .95s cubic-bezier(.4,0,.6,1) var(--fly) forwards}
 .ing-in{position:absolute;inset:0;animation:pop .4s cubic-bezier(.34,1.56,.64,1) var(--in) both}
 .ing .half{position:absolute;inset:0;animation:.22s ease-out var(--cut) forwards}
 .ing .half .ic{width:56px;height:56px;display:block}
@@ -170,16 +172,16 @@ nav.bar button.on{background:var(--tint-orange)}
 @keyframes cutL{to{transform:translate(-6px,2px) rotate(-10deg)}}@keyframes cutR{to{transform:translate(6px,2px) rotate(10deg)}}
 @keyframes fly{0%{left:calc(var(--p) * 100%);top:28px;opacity:1}45%{left:calc((var(--p) + .5) / 2 * 100%);top:-6px;transform:rotate(160deg)}100%{left:50%;top:214px;transform:rotate(380deg) scale(.4);opacity:0}}
 .knife{position:absolute;top:-22px;left:calc(12% - 20px);z-index:3;opacity:0;animation:knifeGo var(--kdur) linear var(--knife) both}
-.knife svg{display:block;animation:chop .09s ease-in-out infinite alternate}
+.knife svg{display:block;animation:chop .18s ease-in-out infinite alternate}
 @keyframes knifeGo{0%{left:calc(12% - 20px);opacity:1}100%{left:calc(88% - 20px);opacity:1}}
 @keyframes chop{from{transform:translateY(-6px) rotate(-6deg)}to{transform:translateY(16px) rotate(0)}}
 .cookscene .knife{animation:knifeGo var(--kdur) linear var(--knife) both,knifeOut .2s linear calc(var(--knife) + var(--kdur)) forwards}
 @keyframes knifeOut{to{opacity:0;transform:translateY(-20px)}}
-.wokwrap{position:absolute;left:50%;top:200px;width:236px;margin-left:-104px;height:96px;z-index:1;transform-origin:44% 70%;animation:toss .42s ease-in-out var(--toss) 8 alternate}
+.wokwrap{position:absolute;left:50%;top:200px;width:236px;margin-left:-104px;height:96px;z-index:1;transform-origin:44% 70%;animation:toss .6s ease-in-out var(--toss) infinite alternate}
 .wok{width:236px;height:auto;display:block}
 .wok .food{opacity:0;animation:pop .3s ease-out var(--toss) forwards}
 @keyframes toss{from{transform:rotate(-4deg) translateY(0)}to{transform:rotate(5deg) translateY(-8px)}}
-.bit{position:absolute;top:14px;width:9px;height:9px;border-radius:50%;opacity:0;animation:hop .5s ease-out var(--b) 7 alternate}
+.bit{position:absolute;top:14px;width:9px;height:9px;border-radius:50%;opacity:0;animation:hop .65s ease-out var(--b) infinite alternate}
 @keyframes hop{0%{transform:translateY(0);opacity:1}100%{transform:translateY(-30px);opacity:1}}
 .fire{position:absolute;left:50%;top:296px;width:200px;margin-left:-100px;height:60px}
 .flame{position:absolute;bottom:0;width:30px;height:46px;margin-left:-15px;transform-origin:50% 100%;animation:flick .28s ease-in-out var(--f) infinite alternate}
@@ -187,20 +189,20 @@ nav.bar button.on{background:var(--tint-orange)}
 .cookedhead{display:flex;align-items:center;gap:14px;padding-top:10px}
 .plate{width:84px;height:84px;border-radius:28px;display:grid;place-items:center;flex-shrink:0;animation:pop .5s cubic-bezier(.34,1.56,.64,1) both}
 .plate .ic{width:62px;height:62px;animation:float 2.6s ease-in-out infinite}
-.userow{display:flex;align-items:center;gap:12px;padding:12px;animation:rise .4s both;animation-delay:calc(var(--i) * 70ms)}
+.userow{display:flex;align-items:center;gap:12px;padding:12px;animation:rise .5s both;animation-delay:calc(.2s + var(--i) * 110ms)}
 .uicon{width:52px;height:52px;border-radius:16px;display:grid;place-items:center;flex-shrink:0}.uicon .ic{width:40px;height:40px}
 .umid{flex:1;min-width:0;display:flex;flex-direction:column;gap:6px}
 .userow .tag{font-family:var(--display);font-weight:600;font-size:13px;padding:2px 9px;border-radius:9px;background:var(--tint-pink);color:var(--pink-ink);flex-shrink:0}
 .userow .tag.gone{background:var(--sunk);color:var(--muted)}
 .ubar{height:10px;border-radius:5px;background:var(--sunk);overflow:hidden}
-.ubar span{display:block;height:100%;border-radius:5px;background:var(--c);animation:shrink 1s cubic-bezier(.3,.7,.3,1) both;animation-delay:calc(.45s + var(--i) * 90ms)}
+.ubar span{display:block;height:100%;border-radius:5px;background:var(--c);animation:shrink 1.5s cubic-bezier(.3,.7,.3,1) both;animation-delay:calc(.7s + var(--i) * 140ms)}
 @keyframes shrink{from{width:var(--from)}to{width:var(--to)}}
 .homebtn{position:relative;overflow:hidden}
 .hcard{padding:12px;display:flex;flex-direction:column}
 .hcard .thumb{width:52px;height:52px;border-radius:16px;display:grid;place-items:center;flex-shrink:0}.hcard .thumb .ic{width:40px;height:40px}
 .hcard.undone{opacity:.6}
 .small.undo{height:38px;border-radius:19px;padding:0 14px;font-size:14px;background:var(--surface);color:var(--ink);box-shadow:0 3px 0 var(--line);outline:2px solid var(--line);outline-offset:-2px;display:flex;align-items:center;gap:6px;flex-shrink:0}
-.homebtn .prog{position:absolute;left:0;bottom:0;height:4px;background:var(--accent-deep);animation:prog 6.5s linear both}
+.homebtn .prog{position:absolute;left:0;bottom:0;height:4px;background:var(--accent-deep);animation:prog 9s linear both}
 @keyframes prog{from{width:0}to{width:100%}}
 @media (prefers-reduced-motion: reduce){*{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
 </style>
@@ -844,9 +846,9 @@ function startCooking() {
   st.cookLog = { name: r.name, hero: r.hero, rows, hid };
   st.selected = {}; st.flavour = null; st.options = null; st.recipeBack = null; st.filter = 'all'; st.mode = 'select';
   persist('items');
-  st.screen = 'cooking'; render(); window.scrollTo(0, 0);
   const n = Math.min(6, rows.length);
-  clearTimeout(cookT); cookT = setTimeout(showCooked, REDUCED() ? 600 : (0.7 + n * 0.18 + (n - 1) * 0.16 + 1.9) * 1000);
+  clearTimeout(cookT);
+  swapScreen(() => { st.screen = 'cooking'; render(); cookT = setTimeout(showCooked, REDUCED() ? 600 : cookTimes(Math.max(1, n)).end * 1000); });
 }
 // Put a cooked meal's ingredients back. Works once per meal; items used up are restored too.
 function undoCook(hid) {
@@ -870,16 +872,37 @@ function historyHtml() {
     ${h.undone ? '<span class="spill dim" style="height:36px">Undone</span>' : `<button class="small undo" data-act="undocook" data-id="${esc(h.id)}">${SVG.undo}Undo</button>`}</div>
     <div class="pill-row" style="margin-top:10px;gap:6px">${h.rows.map(x => `<div class="mini">${icon(x.icon)}${esc(x.name)}<span class="tag" style="background:var(--tint-pink);color:var(--pink-ink)">−${esc(fmtQ(x.used, x.unit))}</span></div>`).join('')}</div></div>`).join('')}</div>`;
 }
-function showCooked() { clearTimeout(cookT); if (!st.cookLog) return goHome(); st.screen = 'cooked'; render(); window.scrollTo(0, 0); cookT = setTimeout(goHome, REDUCED() ? 4000 : 6500); }
-function goHome() { clearTimeout(cookT); st.cookLog = null; st.screen = 'fridge'; render(); window.scrollTo(0, 0); }
+let swapping = false;
+function swapScreen(change) {
+  if (swapping) return;
+  if (REDUCED()) { change(); window.scrollTo(0, 0); return; }
+  swapping = true; app.classList.add('leaving');
+  setTimeout(() => { change(); window.scrollTo(0, 0); requestAnimationFrame(() => { app.classList.remove('leaving'); swapping = false; }); }, 300);
+}
+function showCooked() {
+  clearTimeout(cookT); if (!st.cookLog) return goHome(); if (st.screen !== 'cooking') return;
+  swapScreen(() => { st.screen = 'cooked'; render(); cookT = setTimeout(goHome, REDUCED() ? 4000 : 9000); });
+}
+function goHome() {
+  clearTimeout(cookT); if (st.screen === 'fridge') return;
+  swapScreen(() => { st.cookLog = null; st.screen = 'fridge'; lastScreen = 'fridge'; render(); });
+}
+// Cooking timeline in seconds: pop onto the board, knife sweeps (0.42 s per item), each piece
+// flies into the wok (0.95 s, staggered), the wok tosses, then the summary.
+const FLY_DUR = 0.95;
+function cookTimes(n) {
+  const knife = 0.35 + n * 0.2 + 0.25, knifeDur = n * 0.42, fly = knife + knifeDur + 0.45, gap = 0.3;
+  const landed = fly + (n - 1) * gap + FLY_DUR;
+  return { inGap: 0.2, knife, knifeDur, fly, gap, toss: fly + 0.7, end: landed + 1.8 };
+}
 const fmtQ = (q, u) => (Number.isInteger(q) ? q : q.toFixed(1)) + ' ' + u;
 function viewCooking() {
   const L = st.cookLog; const rows = L.rows.slice(0, 6); const n = Math.max(1, rows.length);
-  const t = { knife: 0.5, knifeDur: n * 0.18, fly: 0.7 + n * 0.18 };
-  const toss = t.fly + 0.45;
+  const t = cookTimes(n);
+  const toss = t.toss;
   const ings = rows.map((x, i) => { const pos = 0.12 + 0.76 * (i + 0.5) / n; const svg = icon(x.icon, 'ic');
-    return `<div class="ing" style="--p:${pos.toFixed(3)};--fly:${(t.fly + i * 0.16).toFixed(2)}s"><div class="ing-in" style="--in:${(0.1 + i * 0.12).toFixed(2)}s"><span class="half l" style="--cut:${(t.knife + (i + 0.5) * 0.18).toFixed(2)}s">${svg}</span><span class="half r" style="--cut:${(t.knife + (i + 0.5) * 0.18).toFixed(2)}s">${svg}</span></div></div>`; }).join('');
-  const bits = rows.concat(rows).slice(0, 8).map((x, i) => `<span class="bit" style="left:${18 + (i * 64 / 8) + (i % 2) * 4}%;background:${CATS[x.cat].color};--b:${(toss + (i % 4) * 0.12).toFixed(2)}s"></span>`).join('');
+    return `<div class="ing" style="--p:${pos.toFixed(3)};--fly:${(t.fly + i * t.gap).toFixed(2)}s"><div class="ing-in" style="--in:${(0.15 + i * t.inGap).toFixed(2)}s"><span class="half l" style="--cut:${(t.knife + (i + 0.5) * 0.42).toFixed(2)}s">${svg}</span><span class="half r" style="--cut:${(t.knife + (i + 0.5) * 0.42).toFixed(2)}s">${svg}</span></div></div>`; }).join('');
+  const bits = rows.concat(rows).slice(0, 8).map((x, i) => `<span class="bit" style="left:${18 + (i * 64 / 8) + (i % 2) * 4}%;background:${CATS[x.cat].color};--b:${(toss + (i % 4) * 0.15).toFixed(2)}s"></span>`).join('');
   const flames = [0, 1, 2, 3, 4].map(i => `<svg class="flame" style="left:${22 + i * 14}%;--f:${(i * 0.13).toFixed(2)}s" viewBox="0 0 24 36" aria-hidden="true"><path d="M12 1c3 7 10 11 10 21a10 10 0 0 1-20 0C2 14 8 10 12 1z" fill="#FF7A45"/><path d="M12 13c2 4 5 6 5 11a5 5 0 0 1-10 0c0-4 3-6 5-11z" fill="#FFC53D"/></svg>`).join('');
   return `<div class="head"><div class="hl"><h1>Cooking</h1></div><button class="small" style="height:40px;border-radius:20px;padding:0 16px;background:var(--surface);box-shadow:0 3px 0 var(--line);color:var(--ink)" data-act="cookskip">Skip</button></div>
   <div class="sub" style="font-size:15px;white-space:normal">${esc(L.name)}</div>
