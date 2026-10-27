@@ -23,7 +23,7 @@
   --bg:#FFF6E9; --surface:#FFFFFF; --ink:#2A1F1A; --muted:#7A6A60; --line:#F0DFC8; --sunk:#F3EADF;
   --accent:#FF7A45; --accent-deep:#D85A28; --mint:#2FBF9B; --mint-deep:#1F8F74; --sun:#FFC53D;
   --tint-orange:#FFE4D2; --tint-mint:#D7F5EC; --tint-pink:#FFE4EB; --pink-ink:#B3123C; --dark:#2A1F1A; --on-dark:#FFF6E9;
-  --wood:#F6D7AE; --wood-deep:#E5BC86; --display:'Fredoka',system-ui,sans-serif; --body:'Nunito',system-ui,sans-serif;
+  --navb:max(10px, calc(env(safe-area-inset-bottom,0px) - 10px)); --wood:#F6D7AE; --wood-deep:#E5BC86; --display:'Fredoka',system-ui,sans-serif; --body:'Nunito',system-ui,sans-serif;
 }
 @media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
   --bg:#1E1714; --surface:#2B221E; --ink:#FFF1E2; --muted:#B9A595; --line:#3A2E28; --sunk:#352A25;
@@ -92,13 +92,13 @@ h1{margin:0;font-family:var(--display);font-weight:600;font-size:34px;letter-spa
 .cta.ghost{background:var(--surface);color:var(--ink);box-shadow:0 4px 0 var(--line)}
 .cta:disabled{opacity:.5;transform:none}
 .cta .num{min-width:28px;height:28px;border-radius:14px;background:var(--accent);color:#2A1F1A;display:grid;place-items:center;font-size:15px;padding:0 8px}
-.stack{position:fixed;left:0;right:0;bottom:0;padding:0 max(16px,env(safe-area-inset-left,0px)) calc(104px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:10px;pointer-events:none;z-index:5}
+.stack{position:fixed;left:0;right:0;bottom:0;padding:0 max(16px,env(safe-area-inset-left,0px)) calc(var(--navb) + 80px) max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:10px;pointer-events:none;z-index:5}
 .stack>*{pointer-events:auto;max-width:448px;width:100%;margin:0 auto}
-.stack.plain{padding-bottom:calc(28px + env(safe-area-inset-bottom,0px))}
-nav.bar{position:fixed;left:max(16px,env(safe-area-inset-left,0px));right:max(16px,env(safe-area-inset-right,0px));bottom:calc(20px + env(safe-area-inset-bottom,0px));max-width:448px;margin:0 auto;height:66px;border-radius:33px;background:var(--surface);box-shadow:0 4px 0 var(--line),0 10px 30px rgba(42,31,26,.12);display:flex;align-items:center;justify-content:space-around;padding:0 8px;z-index:6}
+.stack.plain{padding-bottom:calc(var(--navb) + 8px)}
+nav.bar{position:fixed;left:max(16px,env(safe-area-inset-left,0px));right:max(16px,env(safe-area-inset-right,0px));bottom:var(--navb);max-width:448px;margin:0 auto;height:66px;border-radius:33px;background:var(--surface);box-shadow:0 4px 0 var(--line),0 10px 30px rgba(42,31,26,.12);display:flex;align-items:center;justify-content:space-around;padding:0 8px;z-index:6}
 nav.bar button{width:120px;height:52px;border-radius:26px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-family:var(--display);font-weight:600;font-size:10px}
 nav.bar button.on{background:var(--tint-orange)}
-.toast{position:fixed;left:50%;bottom:calc(112px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--dark);color:var(--on-dark);padding:12px 18px;border-radius:22px;font-family:var(--display);font-weight:600;font-size:15px;display:flex;align-items:center;gap:10px;white-space:nowrap;box-shadow:0 8px 24px rgba(0,0,0,.25);z-index:9;animation:toast 2.6s cubic-bezier(.34,1.56,.64,1) both;max-width:90vw}
+.toast{position:fixed;left:50%;bottom:calc(var(--navb) + 88px);transform:translateX(-50%);background:var(--dark);color:var(--on-dark);padding:12px 18px;border-radius:22px;font-family:var(--display);font-weight:600;font-size:15px;display:flex;align-items:center;gap:10px;white-space:nowrap;box-shadow:0 8px 24px rgba(0,0,0,.25);z-index:9;animation:toast 2.6s cubic-bezier(.34,1.56,.64,1) both;max-width:90vw}
 .sheetwrap{position:fixed;inset:0;background:rgba(30,23,20,.45);z-index:8;display:flex;align-items:flex-end;justify-content:center}
 .sheet{background:var(--bg);width:100%;max-width:480px;max-height:92%;overflow-y:auto;border-radius:28px 28px 0 0;padding:14px max(16px,env(safe-area-inset-left,0px)) calc(28px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-right,0px));animation:rise .35s cubic-bezier(.2,.9,.3,1.1) both;display:flex;flex-direction:column;gap:12px}
 .sheet .grab{width:44px;height:5px;border-radius:3px;background:var(--line);margin:0 auto}
@@ -967,10 +967,13 @@ let lastScreen = null;
 function render() {
   app.classList.toggle('calm', st.screen === lastScreen); lastScreen = st.screen;
   app.innerHTML = (DEMO ? demoBar() : '') + viewFor()();
+  syncPad();
   overlay.innerHTML = sheetHtml() + toastHtml();
 }
 
 const CHK_SVG = '<svg class="chk" width="28" height="28" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="11" fill="#FF7A45" stroke="#FFF6E9" stroke-width="2"/><path d="M7 12.5l3.5 3.5L17 9" stroke="#2A1F1A" stroke-width="2.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+// The fridge grid scrolls under the fixed bottom stack, so leave room for however tall it is.
+function syncPad() { const el = st.screen === 'fridge' && app.querySelector('.stack'); app.style.paddingBottom = el ? (el.offsetHeight + 12) + 'px' : ''; }
 // Picking a tile changes only that tile and the bottom stack, so the grid stays still.
 function patchPick(id) {
   if (st.screen !== 'fridge') { render(); return; }
@@ -982,9 +985,9 @@ function patchPick(id) {
     if (on) t.insertAdjacentHTML('afterbegin', CHK_SVG);
   }
   const html = fridgeStack(); let el = app.querySelector('.stack');
-  if (!html) { if (el) el.remove(); return; }
+  if (!html) { if (el) el.remove(); syncPad(); return; }
   if (!el) { app.querySelector('nav.bar').insertAdjacentHTML('beforebegin', '<div class="stack"></div>'); el = app.querySelector('.stack'); }
-  el.innerHTML = html;
+  el.innerHTML = html; syncPad();
 }
 
 // ───────────────────────── events ─────────────────────────
