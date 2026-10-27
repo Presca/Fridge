@@ -218,8 +218,6 @@ nav.bar button.on{background:var(--tint-orange)}
 .hbtn.done{background:var(--tint-mint);color:var(--mint-deep);outline:none;box-shadow:none}
 .fitcard{padding:12px 14px;box-shadow:none}.fitcard.ok{background:var(--tint-mint)}.fitcard.warn{background:var(--tint-orange)}
 .small.undo{height:38px;border-radius:19px;padding:0 14px;font-size:14px;background:var(--surface);color:var(--ink);box-shadow:0 3px 0 var(--line);outline:2px solid var(--line);outline-offset:-2px;display:flex;align-items:center;gap:6px;flex-shrink:0}
-.homebtn .prog{position:absolute;left:0;bottom:0;height:4px;background:var(--accent-deep);animation:prog 9s linear both}
-@keyframes prog{from{width:0}to{width:100%}}
 @media (prefers-reduced-motion: reduce){*{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
 </style>
 
@@ -623,6 +621,8 @@ async function connectClaude() {
 }
 let cdb = null, prefsSynced = null, syncing = false, syncAgain = false;
 const synced = { items: new Map(), recipes: new Map(), history: new Map() }, dbReady = { items: false, recipes: false, history: false };
+// The store hands records back with keys in its own order; compare by value so our own saves are not mistaken for changes.
+const canon = x => JSON.stringify(x, (k, v) => v && typeof v === 'object' && !Array.isArray(v) ? Object.keys(v).sort().reduce((o, key) => (o[key] = v[key], o), {}) : v);
 const colList = col => col === 'items' ? st.items : col === 'recipes' ? st.recipes : st.history;
 const dbAllReady = () => dbReady.items && dbReady.recipes && dbReady.history;
 function softRender() { if (st.screen === 'cooking' || st.screen === 'cooked') return; if (st.sheet) { app.classList.add('calm'); app.innerHTML = (DEMO ? demoBar() : '') + viewFor()(); } else render(); }
@@ -632,10 +632,10 @@ async function connectClaudeDb() {
   window.claude.use('user').then(u => u && u.can('data.write')).then(ok => { if (ok === false) { st.readOnly = true; render(); } }).catch(() => {});
   const listen = (col, apply) => cdb.collection(col).onSnapshot(snap => {
     const list = snap.docs.map(d => Object.assign({}, d.data()));
-    const before = JSON.stringify(colList(col));
+    const before = canon(colList(col));
     apply(list);
-    const same = before === JSON.stringify(colList(col));
-    synced[col] = new Map(list.map(x => [x.id, JSON.stringify(x)]));
+    const same = before === canon(colList(col));
+    synced[col] = new Map(list.map(x => [x.id, canon(x)]));
     if (!snap.metadata.fromCache) dbReady[col] = true;
     if (dbAllReady()) { st.loaded = true; st.dbState = 'live'; }
     cacheLocal(); if (!same || !st.loaded) softRender(); else if (st.loaded && !app.querySelector('.tile, .empty h2')) softRender();
@@ -655,7 +655,7 @@ async function syncDb() {
       for (const [col, list] of [['items', st.items], ['recipes', st.recipes], ['history', st.history]]) {
         const m = synced[col], seen = new Set();
         for (const x of list) {
-          seen.add(x.id); const j = JSON.stringify(x);
+          seen.add(x.id); const j = canon(x);
           if (m.get(x.id) !== j) { await cdb.collection(col).doc(x.id).set(JSON.parse(j)); m.set(x.id, j); }
         }
         for (const id of [...m.keys()]) if (!seen.has(id)) { await cdb.collection(col).doc(id).delete(); m.delete(id); }
@@ -1010,7 +1010,7 @@ function swapScreen(change) {
 }
 function showCooked() {
   clearTimeout(cookT); if (!st.cookLog) return goHome(); if (st.screen !== 'cooking') return;
-  swapScreen(() => { st.screen = 'cooked'; render(); cookT = setTimeout(goHome, REDUCED() ? 4000 : 9000); });
+  swapScreen(() => { st.screen = 'cooked'; render(); });
 }
 function goHome() {
   clearTimeout(cookT); if (st.screen === 'fridge') return;
@@ -1051,7 +1051,7 @@ function viewCooked() {
   return `<div class="cookedhead"><div class="plate" style="background:${HERO_BG[L.hero] || '#FFF4DD'}">${icon(L.hero)}</div><div><h1>Cooked!</h1><div class="sub" style="font-size:15px;white-space:normal;margin-top:4px">${esc(L.name)} · here's what it used</div></div></div>
   <div style="display:flex;flex-direction:column;gap:10px;margin-top:16px">${rows}</div>
   <div style="height:90px"></div>
-  <div class="stack plain" style="flex-direction:row"><div style="display:flex;gap:10px;width:100%;max-width:448px;margin:0 auto"><button class="cta ghost" style="width:auto;padding:0 22px" data-act="undolast">${SVG.undo}Undo</button><button class="cta prime homebtn" style="flex:1" data-act="cookdone"><span class="prog"></span>${SVG.fridge}Back to fridge</button></div></div>`;
+  <div class="stack plain" style="flex-direction:row"><div style="display:flex;gap:10px;width:100%;max-width:448px;margin:0 auto"><button class="cta ghost" style="width:auto;padding:0 22px" data-act="undolast">${SVG.undo}Undo</button><button class="cta prime homebtn" style="flex:1" data-act="cookdone">${SVG.fridge}Back to fridge</button></div></div>`;
 }
 function viewGen() {
   return `<div class="gen"><div class="pot"><span class="steam" style="left:50px;top:10px"></span><span class="steam" style="left:76px;top:2px;animation-delay:.5s"></span><span class="steam" style="left:100px;top:12px;animation-delay:1s"></span>
@@ -1302,10 +1302,29 @@ document.addEventListener('change', e => {
 document.addEventListener('keydown', e => { if (e.key === 'Escape' && st.sheet) { st.sheet = null; render(); } });
 
 // ───────────────────────── boot ─────────────────────────
-loadLocal();
-if (DEMO && lsGet(LS) == null) seedDemo();
-if (IN_CLAUDE && lsGet(LS) == null) st.loaded = false;
-render(); connectAi(); connectDb();
+// When a new version is published, the Claude viewer reloads open pages. Hand it the current
+// screen so the page comes back where it was (a cooking scene comes back as its summary).
+function hotState() {
+  return { screen: st.screen, recipe: st.recipe, options: st.options, cookLog: st.cookLog, selected: st.selected, flavour: st.flavour, time: st.time, hunger: st.hunger,
+    rtab: st.rtab, recipeBack: st.recipeBack, cravingBack: st.cravingBack, filter: st.filter, shown: st.shown, y: window.scrollY };
+}
+function start(data) {
+  loadLocal();
+  if (DEMO && lsGet(LS) == null) seedDemo();
+  if (IN_CLAUDE && lsGet(LS) == null) st.loaded = false;
+  if (data && data.screen) {
+    ['screen', 'recipe', 'options', 'cookLog', 'selected', 'flavour', 'time', 'hunger', 'rtab', 'recipeBack', 'cravingBack', 'filter', 'shown'].forEach(k => { if (data[k] !== undefined) st[k] = data[k]; });
+    if (st.screen === 'cooking' || st.screen === 'cooked') st.screen = st.cookLog ? 'cooked' : 'fridge';
+    if (st.screen === 'gen') st.screen = 'craving';
+    if ((st.screen === 'recipe' && !st.recipe) || (st.screen === 'options' && !(st.options && st.options.length))) st.screen = 'fridge';
+    lastScreen = st.screen;
+  }
+  render(); if (data && data.y) window.scrollTo(0, data.y);
+  connectAi(); connectDb();
+}
+const HOT = window.claude && window.claude.hot;
+try { if (HOT && HOT.snapshot) HOT.snapshot(hotState); } catch (e) {}
+if (HOT && HOT.ready) HOT.ready(start); else start((HOT && HOT.data) || {});
 if (!IN_CLAUDE && 'serviceWorker' in navigator) window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
 })();
 </script>
