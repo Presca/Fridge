@@ -198,6 +198,9 @@ nav.bar button.on{background:var(--tint-orange)}
 .hcard{padding:12px;display:flex;flex-direction:column}
 .hcard .thumb{width:52px;height:52px;border-radius:16px;display:grid;place-items:center;flex-shrink:0}.hcard .thumb .ic{width:40px;height:40px}
 .hcard.undone{opacity:.6}
+.head.sticky{position:sticky;top:env(safe-area-inset-top,0px);z-index:6;background:var(--bg);margin-inline:calc(-1 * max(16px, env(safe-area-inset-left,0px)));padding-inline:max(16px, env(safe-area-inset-left,0px))}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
+.backpill{height:44px;border-radius:22px;padding:0 16px 0 10px;display:inline-flex;align-items:center;gap:6px;background:var(--surface);color:var(--ink);box-shadow:0 3px 0 var(--line);font-family:var(--display);font-weight:600;font-size:16px}
 .hunger{display:flex;flex-direction:column;gap:10px;padding:12px 14px}
 .hunger .bowl{flex-shrink:0;overflow:visible}
 .hunger .mound{transform-box:view-box;transform-origin:24px 17px;transform:scaleY(var(--s));transition:transform .3s cubic-bezier(.34,1.56,.64,1)}
@@ -1056,7 +1059,8 @@ function viewRecipe() {
   const r = st.recipe; if (!r) { st.screen = 'fridge'; return viewFridge(); }
   const uses = Object.keys(r.uses || {}).map(id => { const it = item(id); const need = r.uses[id]; return { it, need, short: !it || it.qty < need }; }).filter(u => u.it);
   const saved = st.recipes.some(x => x.id === r.id);
-  let h = `<div class="head"><button class="round" data-act="go" data-to="${st.recipeBack || (r.src === 'generated' ? 'options' : 'recipes')}" aria-label="Back">${SVG.back}</button></div>`;
+  const backTo = st.recipeBack || (r.src === 'generated' ? 'options' : 'recipes');
+  let h = `<div class="head sticky"><button class="backpill" data-act="go" data-to="${backTo}">${SVG.back}<span>${{ options: 'Pick one', recipes: 'Recipes', craving: 'Craving', fridge: 'Fridge' }[backTo] || 'Back'}</span></button></div>`;
   h += `<div class="hero" style="background:${HERO_BG[r.hero] || '#FFF4DD'}">${icon(r.hero)}</div>`;
   h += `<h1 style="margin-top:16px;font-size:28px">${esc(r.name)}</h1>`;
   const nut = ['protein', 'carbs', 'fibre'].map(k => { const ok = !!(r.nutrients && r.nutrients[k]) || uses.some(u => catOf(u.it.cat) === k); return `<span class="spill ${ok ? '' : 'dim'}" ${ok ? `style="background:${CATS[k].bg};color:#2A1F1A;box-shadow:none"` : ''}><span class="dot" style="width:8px;height:8px;border-radius:50%;background:${ok ? CATS[k].color : '#D9CFC4'};display:block"></span>${CATS[k].label}</span>`; }).join('');
@@ -1145,11 +1149,41 @@ const app = document.getElementById('app'), overlay = document.getElementById('o
 function toastHtml() { return st.toast ? `<div class="toast" role="status"><svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="11" fill="#2FBF9B"/><path d="M7 12.5l3.5 3.5L17 9" stroke="#1E1714" stroke-width="2.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>${esc(st.toast)}</div>` : ''; }
 function viewFor() { return { fridge: viewFridge, craving: viewCraving, options: viewOptions, cooking: viewCooking, cooked: viewCooked, gen: viewGen, recipe: viewRecipe, recipes: viewRecipes }[st.screen] || viewFridge; }
 let lastScreen = null;
+// ───────────────────────── back button / back gesture ─────────────────────────
+// Deeper screens get a plain #name history entry, so the phone's back steps through the app
+// instead of leaving it. The two tabs (Fridge, Recipes) are the root and have no hash.
+const HASH = { craving: 'craving', options: 'ideas', recipe: 'recipe', cooking: 'cooked', cooked: 'cooked' };
+const SCREEN_OF = { craving: 'craving', ideas: 'options', recipe: 'recipe', cooked: 'cooked' };
+let navStack = [], pendingScreen = null, lastRoot = 'fridge';
+function clearHash() { try { history.replaceState(null, '', location.pathname + location.search); } catch (e) {} }
+function syncHash() {
+  if (st.screen === 'gen') return;
+  if (st.screen === 'fridge' || st.screen === 'recipes') lastRoot = st.screen;
+  const want = HASH[st.screen] || '', cur = location.hash.slice(1);
+  if (want === cur) return;
+  const idx = want ? navStack.lastIndexOf(want) : -1;
+  const steps = want ? (idx >= 0 ? navStack.length - 1 - idx : 0) : navStack.length;
+  if (steps > 0 && (!want || idx >= 0)) { pendingScreen = st.screen; history.go(-steps); return; }
+  if (!want) { navStack = []; clearHash(); return; }
+  navStack.push(want); location.hash = want;
+}
+window.addEventListener('hashchange', () => {
+  const h = location.hash.slice(1), idx = navStack.lastIndexOf(h);
+  if (!h) navStack = []; else if (idx >= 0) navStack = navStack.slice(0, idx + 1); else navStack.push(h);
+  let target = pendingScreen || SCREEN_OF[h] || lastRoot; pendingScreen = null;
+  if (target === 'cooked' && st.screen === 'cooking') return; // the scene and its summary share one entry
+  // backing out of the cooked summary goes home, never back into the recipe that was just cooked
+  if ((st.screen === 'cooking' || st.screen === 'cooked') && target !== 'cooked') { clearTimeout(cookT); st.cookLog = null; target = lastRoot; }
+  if ((target === 'recipe' && !st.recipe) || (target === 'options' && !(st.options && st.options.length)) || (target === 'cooked' && !st.cookLog)) target = lastRoot;
+  if (target === st.screen) return;
+  st.screen = target; st.err = null; st.sheet = null; render(); window.scrollTo(0, 0);
+});
 function render() {
   app.classList.toggle('calm', st.screen === lastScreen); lastScreen = st.screen;
   app.innerHTML = (DEMO ? demoBar() : '') + viewFor()();
   syncPad();
   overlay.innerHTML = sheetHtml() + toastHtml();
+  syncHash();
 }
 
 const CHK_SVG = '<svg class="chk" width="28" height="28" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="11" fill="#FF7A45" stroke="#FFF6E9" stroke-width="2"/><path d="M7 12.5l3.5 3.5L17 9" stroke="#2A1F1A" stroke-width="2.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>';
