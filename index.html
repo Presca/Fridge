@@ -201,6 +201,13 @@ nav.bar button.on{background:var(--tint-orange)}
 .hcard{padding:12px;display:flex;flex-direction:column}
 .hcard .thumb{width:52px;height:52px;border-radius:16px;display:grid;place-items:center;flex-shrink:0}.hcard .thumb .ic{width:40px;height:40px}
 .hcard.undone{opacity:.6}
+.hunger{display:flex;flex-direction:column;gap:10px;padding:12px 14px}
+.hunger .bowl{flex-shrink:0;overflow:visible}
+.hunger .mound{transform-box:view-box;transform-origin:24px 17px;transform:scaleY(var(--s));transition:transform .3s cubic-bezier(.34,1.56,.64,1)}
+.hunger input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:12px;padding:0;border:0;border-radius:6px;background:linear-gradient(to right,var(--accent) var(--pct),var(--sunk) var(--pct));cursor:pointer}
+.hunger input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:30px;height:30px;border-radius:50%;background:var(--surface);border:3px solid var(--accent);box-shadow:0 3px 0 var(--accent-deep);transition:transform .15s}
+.hunger input[type=range]:active::-webkit-slider-thumb{transform:scale(1.15)}
+.hunger input[type=range]::-moz-range-thumb{width:26px;height:26px;border-radius:50%;background:var(--surface);border:3px solid var(--accent);box-shadow:0 3px 0 var(--accent-deep)}
 .optcard{gap:6px;padding:10px 8px 10px 12px}
 .optmain{flex:1;min-width:0;display:flex;align-items:center;gap:12px;text-align:left;color:inherit}
 .optside{display:flex;flex-direction:column;align-items:center;gap:3px;flex-shrink:0}
@@ -245,6 +252,13 @@ const FLAV = [
   { id: 'surprise',label: 'Surprise me', icon: 'dice' }
 ];
 const TIMES = [10, 20, 30, 45];
+// Appetite, 1-5: label shown on the slider, words for Claude, portion factor for the demo.
+const HUNGER = [null,
+  { label: 'Just a bite', ask: 'just a small bite, snack-sized portions', k: 0.5 },
+  { label: 'Light', ask: 'something light, smaller portions', k: 0.75 },
+  { label: 'Normal', ask: 'a normal meal, normal portions', k: 1 },
+  { label: 'Hungry', ask: 'hungry: a hearty, filling meal with generous portions', k: 1.25 },
+  { label: 'Starving', ask: 'starving: a big, very filling meal with large portions', k: 1.5 }];
 const HERO_BG = { tomato: '#FFD9D4', tofu: '#FFF1D6', salmon: '#FFE0D4', broccoli: '#DDF5E1', lemon: '#FFF4B8', mushroom: '#FFE3D2', cheese: '#FFF0B8', chili: '#FFDAD2', bread: '#FFEBD0', egg: '#FFF4DD', chicken: '#FFE3CF', rice: '#FFE9D6', noodle: '#D7F5EC', spinach: '#DDF5E1', garlic: '#F3EADF', onion: '#EFE0F5', soy: '#E8D8CF', milk: '#E0EFFF' };
 const S = 'stroke="#2A1F1A" stroke-width="2.5" stroke-linejoin="round"';
 const F = (x, y, w) => `<circle cx="${x}" cy="${y}" r="1.8" fill="#2A1F1A"/><circle cx="${x + w}" cy="${y}" r="1.8" fill="#2A1F1A"/><path d="M${x + 1} ${y + 5}q${w / 2 - 1} 3 ${w - 2} 0" stroke="#2A1F1A" stroke-width="1.8" fill="none" stroke-linecap="round"/>`;
@@ -311,7 +325,7 @@ const DAY = 86400000;
 const st = {
   items: [], recipes: [], history: [], servings: 2, loaded: false,
   screen: 'fridge', mode: 'select', filter: 'all', selected: {}, flavour: null, time: 20,
-  recipe: null, options: null, recipeBack: null, shown: [], rtab: 'saved', toast: null, sheet: null, busy: null, err: null,
+  hunger: 3, recipe: null, options: null, recipeBack: null, shown: [], rtab: 'saved', toast: null, sheet: null, busy: null, err: null,
   scan: { files: [], preview: null, detected: null }, ai: null, canImage: false, db: null, synced: false
 };
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -452,7 +466,7 @@ const DEMO_DISHES = [
   { name: 'Loaded {v} omelette', flav: ['comfort', 'cheesy'], time: 10, needs: 'egg', steps: ['Beat the eggs with a pinch of salt', 'Soften the {v} in a pan', 'Pour in the eggs and fold when just set', 'Serve with {c}'] }
 ];
 function demoPortion(it) {
-  const s = st.servings, c = catOf(it.cat);
+  const s = st.servings * HUNGER[st.hunger].k, c = catOf(it.cat);
   const q = it.unit === 'g' ? ({ protein: 150, carbs: 90, fibre: 100, dairy: 60, seasoning: 10 }[c] || 80) * s
     : it.unit === 'ml' ? 15 * s : it.unit === 'pcs' ? Math.max(1, Math.ceil(s * (c === 'protein' ? 1 : 0.5)))
     : it.unit === 'cloves' ? 2 : it.unit === 'fillets' ? s : it.unit === 'slices' ? s : 1;
@@ -702,7 +716,7 @@ async function generate(excludeNames) {
 FRIDGE (only use these; never exceed the amounts listed):
 ${fridgeText()}
 PICKED (must feature these): ${sel.length ? sel.map(id => item(id).name).join(', ') : 'none — you choose, prefer USE SOON items'}
-Seasoning from the fridge may be added freely even if not picked. People eating: ${st.servings}. Max cooking time: ${st.time} min. Flavour: ${flav === 'surprise' ? 'anything, be varied' : flav}.
+Seasoning from the fridge may be added freely even if not picked. People eating: ${st.servings}. Appetite: ${HUNGER[st.hunger].ask}; scale the amounts to match. Max cooking time: ${st.time} min. Flavour: ${flav === 'surprise' ? 'anything, be varied' : flav}.
 Keep each one quick and easy: few steps, simple techniques, within the time limit.
 Aim for a balanced plate (a protein, a carb, a vegetable/fibre) using what is there; prefer USE SOON items.
 ${excludeNames && excludeNames.length ? 'Do NOT suggest these again: ' + excludeNames.join('; ') + '.' : ''}
@@ -878,6 +892,14 @@ function fridgeStack() {
   }
   return stack;
 }
+function hungerHtml() {
+  const v = st.hunger, pct = (v - 1) * 25;
+  return `<div class="card hunger" style="margin-top:18px;--pct:${pct}%">
+    <div class="row" style="gap:12px"><svg class="bowl" viewBox="0 0 48 40" width="52" height="44" style="--s:${v / 5}" aria-hidden="true"><ellipse class="mound" cx="24" cy="17" rx="17" ry="12" fill="#FFB061" stroke="#2A1F1A" stroke-width="2.2"/><path d="M4 17h40c0 11-9 19-20 19S4 28 4 17z" fill="#FF7A45" stroke="#2A1F1A" stroke-width="2.5" stroke-linejoin="round"/><path d="M12 25h24" stroke="#FFF6E9" stroke-width="3" stroke-linecap="round" opacity=".5"/></svg>
+    <div style="flex:1;min-width:0"><label for="hunger" class="ff" style="font-size:17px">How hungry?</label><div class="sub hlabel" style="font-size:14px">${HUNGER[v].label}</div></div></div>
+    <input type="range" id="hunger" min="1" max="5" step="1" value="${v}" aria-valuetext="${HUNGER[v].label}">
+    <div class="row" style="justify-content:space-between;font-size:12px;color:var(--muted);font-weight:700"><span>Light</span><span>Heavy</span></div></div>`;
+}
 function viewCraving() {
   let h = `<div class="head"><div class="hl"><button class="round" data-act="go" data-to="${st.cravingBack || 'fridge'}" aria-label="Back">${SVG.back}</button><h1>Craving?</h1></div></div>`;
   if (st.err) h += `<div class="err" style="margin-bottom:12px">${esc(st.err)}</div>`;
@@ -886,7 +908,8 @@ function viewCraving() {
     ? `<div class="hrow" style="margin-bottom:14px">${sel.map(id => { const it = item(id); return `<div class="mini" style="background:${CATS[catOf(it.cat)].bg};color:#2A1F1A;box-shadow:none">${icon(iconOf(it))}${esc(it.name)}</div>`; }).join('')}</div>`
     : `<div class="card row" style="margin-bottom:14px;gap:10px">${icon('dice', 'ic').replace('class="ic"', 'style="width:40px;height:40px;flex-shrink:0"')}<span style="font-size:14px">I'll pick from your fridge, starting with what's about to spoil.</span></div>`;
   h += `<div class="grid" style="grid-template-columns:repeat(2,minmax(0,1fr));gap:12px">${FLAV.map((f, i) => `<button class="crav ${st.flavour === f.id ? 'on' : ''}" style="animation-delay:${i * 45}ms;${st.flavour === f.id ? 'background:' + HERO_BG[f.icon] + ';color:#2A1F1A' : ''}" data-act="flav" data-id="${f.id}" aria-pressed="${st.flavour === f.id}">${icon(f.icon)}${f.label}</button>`).join('')}</div>`;
-  h += `<div class="card row" style="margin-top:18px"><div class="people">${Array.from({ length: 6 }, (_, k) => SVG.person(k < st.servings ? '#FFC53D' : 'var(--sunk)')).join('')}</div><span class="ff" style="font-size:17px">${st.servings} ${st.servings === 1 ? 'person' : 'people'}</span><div class="row" style="margin-left:auto;gap:6px"><button class="round" style="width:40px;height:40px;background:var(--tint-orange);box-shadow:none" data-act="people" data-d="-1" aria-label="Fewer people">${SVG.minus}</button><button class="round" style="width:40px;height:40px;background:var(--tint-mint);box-shadow:none" data-act="people" data-d="1" aria-label="More people">${SVG.plusS}</button></div></div>`;
+  h += hungerHtml();
+  h += `<div class="card row" style="margin-top:12px"><div class="people">${Array.from({ length: 6 }, (_, k) => SVG.person(k < st.servings ? '#FFC53D' : 'var(--sunk)')).join('')}</div><span class="ff" style="font-size:17px">${st.servings} ${st.servings === 1 ? 'person' : 'people'}</span><div class="row" style="margin-left:auto;gap:6px"><button class="round" style="width:40px;height:40px;background:var(--tint-orange);box-shadow:none" data-act="people" data-d="-1" aria-label="Fewer people">${SVG.minus}</button><button class="round" style="width:40px;height:40px;background:var(--tint-mint);box-shadow:none" data-act="people" data-d="1" aria-label="More people">${SVG.plusS}</button></div></div>`;
   h += `<div style="margin-top:20px"><div class="row" style="margin-bottom:10px">${SVG.clock}<span class="ff" style="font-size:17px">Time I have</span><span class="sub" style="margin-left:auto;font-size:14px">${st.time} min</span></div><div class="row" style="gap:8px">${TIMES.map(t => `<button class="timec ${st.time === t ? 'on' : ''}" data-act="time" data-t="${t}">${t} min</button>`).join('')}</div></div>`;
   const saved = savedMatches();
   if (saved.length) h += `<div style="margin-top:22px"><div class="row" style="margin-bottom:10px">${SVG.book}<span class="ff" style="font-size:17px">From your recipes</span></div><div style="display:flex;flex-direction:column;gap:10px">${saved.map(({ r, pct }, i) => `<div class="card rcard" style="animation:rise .4s both;animation-delay:${i * 40}ms"><div class="thumb" style="background:${HERO_BG[r.hero] || '#FFF4DD'}">${icon(r.hero)}</div><div style="flex:1;min-width:0"><div class="ff" style="font-size:16px;line-height:1.1">${esc(r.name)}</div><div class="row" style="gap:6px;margin-top:6px;font-size:12px;color:var(--muted)">${SVG.clock}${r.time} min</div></div>${ringHtml(pct)}<button class="round accent" style="width:44px;height:44px" data-act="openrecipe" data-id="${r.id}" data-from="craving" aria-label="Open ${esc(r.name)}">${SVG.arrow}</button></div>`).join('')}</div></div>`;
@@ -1215,6 +1238,15 @@ function readAddForm() {
   if (!g('a-name')) return;
   const prev = st.add || {}; st.add = Object.assign(prev, { touchedCat: prev.touchedCat || g('a-cat').value !== (prev.cat || 'fibre'), touchedShelf: prev.touchedShelf || String(g('a-shelf').value) !== String(prev.shelf || 7), name: g('a-name').value, qty: g('a-qty').value, unit: g('a-unit').value, cat: g('a-cat').value, shelf: g('a-shelf').value, exp: g('a-exp').value });
 }
+document.addEventListener('input', e => {
+  const t = e.target; if (t.id !== 'hunger') return;
+  st.hunger = Math.min(5, Math.max(1, Number(t.value) || 3));
+  const card = t.closest('.hunger'); if (!card) return;
+  card.style.setProperty('--pct', (st.hunger - 1) * 25 + '%');
+  card.querySelector('.bowl').style.setProperty('--s', st.hunger / 5);
+  card.querySelector('.hlabel').textContent = HUNGER[st.hunger].label;
+  t.setAttribute('aria-valuetext', HUNGER[st.hunger].label);
+});
 document.addEventListener('change', e => {
   const t = e.target;
   if (t.id === 'photo') {
