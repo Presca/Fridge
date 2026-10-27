@@ -1,0 +1,20 @@
+name = "fridge-api"
+main = "worker.js"
+compatibility_date = "2026-10-01"
+
+# Create with: npx wrangler kv namespace create FRIDGE   (paste the id it prints below; ids are not secret)
+[[kv_namespaces]]
+binding = "FRIDGE"
+id = "PASTE_KV_NAMESPACE_ID_HERE"
+
+[vars]
+# The only website allowed to call this Worker.
+ALLOWED_ORIGIN = "https://presca.github.io"
+# Cheapest current model with vision. Change to "claude-sonnet-5-5" for better recipes at ~20x the cost.
+MODEL = "claude-haiku-5-5"
+# Hard stop on AI calls per calendar month.
+MAX_CALLS_PER_MONTH = "300"
+
+# Secrets are NOT in this file. Set them with:
+#   npx wrangler secret put ANTHROPIC_API_KEY
+#   npx wrangler secret put PASSCODE
