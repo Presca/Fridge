@@ -1032,7 +1032,7 @@ function viewRecipe() {
   const r = st.recipe; if (!r) { st.screen = 'fridge'; return viewFridge(); }
   const uses = Object.keys(r.uses || {}).map(id => { const it = item(id); const need = r.uses[id]; return { it, need, short: !it || it.qty < need }; }).filter(u => u.it);
   const saved = st.recipes.some(x => x.id === r.id);
-  let h = `<div class="head"><button class="round" data-act="go" data-to="${st.recipeBack || (r.src === 'generated' ? 'options' : 'recipes')}" aria-label="Back">${SVG.back}</button><div class="row" style="gap:8px"><button class="round" data-act="saverecipe" aria-label="${saved ? 'Remove from recipes' : 'Save recipe'}">${SVG.save(saved)}</button></div></div>`;
+  let h = `<div class="head"><button class="round" data-act="go" data-to="${st.recipeBack || (r.src === 'generated' ? 'options' : 'recipes')}" aria-label="Back">${SVG.back}</button></div>`;
   h += `<div class="hero" style="background:${HERO_BG[r.hero] || '#FFF4DD'}">${icon(r.hero)}</div>`;
   h += `<h1 style="margin-top:16px;font-size:28px">${esc(r.name)}</h1>`;
   const nut = ['protein', 'carbs', 'fibre'].map(k => { const ok = !!(r.nutrients && r.nutrients[k]) || uses.some(u => catOf(u.it.cat) === k); return `<span class="spill ${ok ? '' : 'dim'}" ${ok ? `style="background:${CATS[k].bg};color:#2A1F1A;box-shadow:none"` : ''}><span class="dot" style="width:8px;height:8px;border-radius:50%;background:${ok ? CATS[k].color : '#D9CFC4'};display:block"></span>${CATS[k].label}</span>`; }).join('');
@@ -1162,13 +1162,19 @@ function toggleSave(r) {
 // ───────────────────────── events ─────────────────────────
 let lp = null, held = false;
 function setQty(id, q) { const it = item(id); if (!it) return; it.qty = Math.max(0, Math.round(q * 10) / 10); if (it.qty === 0) delete st.selected[id]; persist('items'); }
+// Hold a tile to edit amounts. A hold only counts if the finger stays put: any movement past
+// ~10px or any scroll cancels it, so dragging through the grid never opens edit mode.
+let lpX = 0, lpY = 0;
+const cancelHold = () => { clearTimeout(lp); lp = null; };
 document.addEventListener('pointerdown', e => {
-  const t = e.target.closest('[data-act="pick"].tile'); if (!t) return;
-  clearTimeout(lp); held = false;
-  lp = setTimeout(() => { held = true; st.mode = 'edit'; render(); }, 450);
+  const t = e.target.closest('[data-act="pick"].tile'); if (!t || e.button > 0) return;
+  cancelHold(); held = false; lpX = e.clientX; lpY = e.clientY;
+  lp = setTimeout(() => { lp = null; held = true; st.mode = 'edit'; render(); }, 500);
 });
-['pointerup', 'pointercancel'].forEach(ev => document.addEventListener(ev, () => clearTimeout(lp)));
-document.addEventListener('pointermove', e => { if (lp && e.buttons === 0) clearTimeout(lp); });
+document.addEventListener('pointermove', e => { if (lp && Math.hypot(e.clientX - lpX, e.clientY - lpY) > 10) cancelHold(); }, { passive: true });
+document.addEventListener('touchmove', e => { const p = e.touches[0]; if (lp && p && Math.hypot(p.clientX - lpX, p.clientY - lpY) > 10) cancelHold(); }, { passive: true });
+['pointerup', 'pointercancel', 'touchend', 'touchcancel'].forEach(ev => document.addEventListener(ev, cancelHold, { passive: true }));
+window.addEventListener('scroll', cancelHold, { passive: true, capture: true });
 document.addEventListener('contextmenu', e => { if (e.target.closest('.tile')) e.preventDefault(); });
 document.addEventListener('click', async e => {
   const el = e.target.closest('[data-act]'); if (!el) return;
