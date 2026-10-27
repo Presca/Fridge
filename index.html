@@ -23,14 +23,14 @@
   --bg:#FFF6E9; --surface:#FFFFFF; --ink:#2A1F1A; --muted:#7A6A60; --line:#F0DFC8; --sunk:#F3EADF;
   --accent:#FF7A45; --accent-deep:#D85A28; --mint:#2FBF9B; --mint-deep:#1F8F74; --sun:#FFC53D;
   --tint-orange:#FFE4D2; --tint-mint:#D7F5EC; --tint-pink:#FFE4EB; --pink-ink:#B3123C; --dark:#2A1F1A; --on-dark:#FFF6E9;
-  --display:'Fredoka',system-ui,sans-serif; --body:'Nunito',system-ui,sans-serif;
+  --navb:max(10px, calc(env(safe-area-inset-bottom,0px) - 10px)); --wood:#F6D7AE; --wood-deep:#E5BC86; --display:'Fredoka',system-ui,sans-serif; --body:'Nunito',system-ui,sans-serif;
 }
 @media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
   --bg:#1E1714; --surface:#2B221E; --ink:#FFF1E2; --muted:#B9A595; --line:#3A2E28; --sunk:#352A25;
-  --tint-orange:#4A2C1E; --tint-mint:#1E3D35; --tint-pink:#4A2230; --pink-ink:#FFB3C6; --dark:#FFF6E9; --on-dark:#2A1F1A; color-scheme:dark } }
+  --tint-orange:#4A2C1E; --tint-mint:#1E3D35; --tint-pink:#4A2230; --pink-ink:#FFB3C6; --dark:#FFF6E9; --on-dark:#2A1F1A; --wood:#5A3E2B; --wood-deep:#46301F; color-scheme:dark } }
 :root[data-theme="dark"]{
   --bg:#1E1714; --surface:#2B221E; --ink:#FFF1E2; --muted:#B9A595; --line:#3A2E28; --sunk:#352A25;
-  --tint-orange:#4A2C1E; --tint-mint:#1E3D35; --tint-pink:#4A2230; --pink-ink:#FFB3C6; --dark:#FFF6E9; --on-dark:#2A1F1A; color-scheme:dark }
+  --tint-orange:#4A2C1E; --tint-mint:#1E3D35; --tint-pink:#4A2230; --pink-ink:#FFB3C6; --dark:#FFF6E9; --on-dark:#2A1F1A; --wood:#5A3E2B; --wood-deep:#46301F; color-scheme:dark }
 html,body{height:100%}
 [hidden]{display:none!important}
 img{max-width:100%}
@@ -41,7 +41,8 @@ button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-vis
 input,textarea,select{font-family:inherit;font-weight:700;color:var(--ink);background:var(--surface);border:2px solid var(--line);border-radius:14px;padding:12px 14px;font-size:16px;width:100%}
 textarea{min-height:110px;resize:vertical}
 .ff{font-family:var(--display);font-weight:600}
-#app{max-width:480px;margin:0 auto;min-height:100%;position:relative;display:flex;flex-direction:column;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:calc(12px + env(safe-area-inset-top,0px)) 120px}
+#app{max-width:480px;margin:0 auto;min-height:100%;position:relative;display:flex;flex-direction:column;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:calc(12px + env(safe-area-inset-top,0px)) 120px;transition:opacity .3s ease}
+#app.leaving{opacity:0}
 h1{margin:0;font-family:var(--display);font-weight:600;font-size:34px;letter-spacing:-.5px;line-height:1;text-wrap:balance}
 .sub{font-size:12px;color:var(--muted);white-space:nowrap}
 .head{display:flex;align-items:center;justify-content:space-between;padding:8px 0 10px;gap:10px}
@@ -92,13 +93,13 @@ h1{margin:0;font-family:var(--display);font-weight:600;font-size:34px;letter-spa
 .cta.ghost{background:var(--surface);color:var(--ink);box-shadow:0 4px 0 var(--line)}
 .cta:disabled{opacity:.5;transform:none}
 .cta .num{min-width:28px;height:28px;border-radius:14px;background:var(--accent);color:#2A1F1A;display:grid;place-items:center;font-size:15px;padding:0 8px}
-.stack{position:fixed;left:0;right:0;bottom:0;padding:0 max(16px,env(safe-area-inset-left,0px)) calc(104px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:10px;pointer-events:none;z-index:5}
+.stack{position:fixed;left:0;right:0;bottom:0;padding:0 max(16px,env(safe-area-inset-left,0px)) calc(var(--navb) + 80px) max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:10px;pointer-events:none;z-index:5}
 .stack>*{pointer-events:auto;max-width:448px;width:100%;margin:0 auto}
-.stack.plain{padding-bottom:calc(28px + env(safe-area-inset-bottom,0px))}
-nav.bar{position:fixed;left:max(16px,env(safe-area-inset-left,0px));right:max(16px,env(safe-area-inset-right,0px));bottom:calc(20px + env(safe-area-inset-bottom,0px));max-width:448px;margin:0 auto;height:66px;border-radius:33px;background:var(--surface);box-shadow:0 4px 0 var(--line),0 10px 30px rgba(42,31,26,.12);display:flex;align-items:center;justify-content:space-around;padding:0 8px;z-index:6}
+.stack.plain{padding-bottom:calc(var(--navb) + 8px)}
+nav.bar{position:fixed;left:max(16px,env(safe-area-inset-left,0px));right:max(16px,env(safe-area-inset-right,0px));bottom:var(--navb);max-width:448px;margin:0 auto;height:66px;border-radius:33px;background:var(--surface);box-shadow:0 4px 0 var(--line),0 10px 30px rgba(42,31,26,.12);display:flex;align-items:center;justify-content:space-around;padding:0 8px;z-index:6}
 nav.bar button{width:120px;height:52px;border-radius:26px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-family:var(--display);font-weight:600;font-size:10px}
 nav.bar button.on{background:var(--tint-orange)}
-.toast{position:fixed;left:50%;bottom:calc(112px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--dark);color:var(--on-dark);padding:12px 18px;border-radius:22px;font-family:var(--display);font-weight:600;font-size:15px;display:flex;align-items:center;gap:10px;white-space:nowrap;box-shadow:0 8px 24px rgba(0,0,0,.25);z-index:9;animation:toast 2.6s cubic-bezier(.34,1.56,.64,1) both;max-width:90vw}
+.toast{position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 12px);transform:translateX(-50%);background:var(--dark);color:var(--on-dark);padding:12px 18px;border-radius:22px;font-family:var(--display);font-weight:600;font-size:15px;display:flex;align-items:center;gap:10px;white-space:nowrap;box-shadow:0 8px 24px rgba(0,0,0,.25);z-index:9;animation:toast 2.6s cubic-bezier(.34,1.56,.64,1) both;max-width:90vw}
 .sheetwrap{position:fixed;inset:0;background:rgba(30,23,20,.45);z-index:8;display:flex;align-items:flex-end;justify-content:center}
 .sheet{background:var(--bg);width:100%;max-width:480px;max-height:92%;overflow-y:auto;border-radius:28px 28px 0 0;padding:14px max(16px,env(safe-area-inset-left,0px)) calc(28px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-right,0px));animation:rise .35s cubic-bezier(.2,.9,.3,1.1) both;display:flex;flex-direction:column;gap:12px}
 .sheet .grab{width:44px;height:5px;border-radius:3px;background:var(--line);margin:0 auto}
@@ -156,9 +157,67 @@ nav.bar button.on{background:var(--tint-orange)}
 .rock{animation:rock 1.1s ease-in-out infinite}
 @keyframes dot{0%,100%{transform:translateY(0);opacity:.4}50%{transform:translateY(-6px);opacity:1}}
 @keyframes scan{0%,100%{top:6%}50%{top:90%}}
-@keyframes toast{0%{transform:translate(-50%,40px);opacity:0}12%{transform:translate(-50%,0);opacity:1}80%{transform:translate(-50%,0);opacity:1}100%{transform:translate(-50%,20px);opacity:0}}
+@keyframes toast{0%{transform:translate(-50%,-40px);opacity:0}12%{transform:translate(-50%,0);opacity:1}80%{transform:translate(-50%,0);opacity:1}100%{transform:translate(-50%,-20px);opacity:0}}
 @keyframes spark{0%,100%{transform:scale(.6) rotate(0);opacity:.3}50%{transform:scale(1.1) rotate(20deg);opacity:1}}
 .spark{animation:spark 1.4s ease-in-out infinite}
+.calm .tile:not(.edit),.calm .crav,.calm .rcard,.calm .people svg{animation:none}
+.cookscene{position:relative;height:380px;margin-top:34px}
+.wokwrap .steam{animation-fill-mode:both}
+.board{position:absolute;top:10px;left:4%;right:4%;height:92px;border-radius:24px;background:var(--wood);box-shadow:inset 0 -5px 0 var(--wood-deep)}
+.ing{position:absolute;top:28px;left:calc(var(--p) * 100%);width:56px;height:56px;margin-left:-28px;z-index:2;animation:fly .95s cubic-bezier(.4,0,.6,1) var(--fly) forwards}
+.ing-in{position:absolute;inset:0;animation:pop .4s cubic-bezier(.34,1.56,.64,1) var(--in) both}
+.ing .half{position:absolute;inset:0;animation:.22s ease-out var(--cut) forwards}
+.ing .half .ic{width:56px;height:56px;display:block}
+.ing .half.l{clip-path:inset(0 50% 0 0);animation-name:cutL}.ing .half.r{clip-path:inset(0 0 0 50%);animation-name:cutR}
+@keyframes cutL{to{transform:translate(-6px,2px) rotate(-10deg)}}@keyframes cutR{to{transform:translate(6px,2px) rotate(10deg)}}
+@keyframes fly{0%{left:calc(var(--p) * 100%);top:28px;opacity:1}45%{left:calc((var(--p) + .5) / 2 * 100%);top:-6px;transform:rotate(160deg)}100%{left:50%;top:214px;transform:rotate(380deg) scale(.4);opacity:0}}
+.knife{position:absolute;top:-22px;left:calc(12% - 20px);z-index:3;opacity:0;animation:knifeGo var(--kdur) linear var(--knife) both}
+.knife svg{display:block;animation:chop .18s ease-in-out infinite alternate}
+@keyframes knifeGo{0%{left:calc(12% - 20px);opacity:1}100%{left:calc(88% - 20px);opacity:1}}
+@keyframes chop{from{transform:translateY(-6px) rotate(-6deg)}to{transform:translateY(16px) rotate(0)}}
+.cookscene .knife{animation:knifeGo var(--kdur) linear var(--knife) both,knifeOut .2s linear calc(var(--knife) + var(--kdur)) forwards}
+@keyframes knifeOut{to{opacity:0;transform:translateY(-20px)}}
+.wokwrap{position:absolute;left:50%;top:200px;width:236px;margin-left:-104px;height:96px;z-index:1;transform-origin:44% 70%;animation:toss .6s ease-in-out var(--toss) infinite alternate}
+.wok{width:236px;height:auto;display:block}
+.wok .food{opacity:0;animation:pop .3s ease-out var(--toss) forwards}
+@keyframes toss{from{transform:rotate(-4deg) translateY(0)}to{transform:rotate(5deg) translateY(-8px)}}
+.bit{position:absolute;top:14px;width:9px;height:9px;border-radius:50%;opacity:0;animation:hop .65s ease-out var(--b) infinite alternate}
+@keyframes hop{0%{transform:translateY(0);opacity:1}100%{transform:translateY(-30px);opacity:1}}
+.fire{position:absolute;left:50%;top:296px;width:200px;margin-left:-100px;height:60px}
+.flame{position:absolute;bottom:0;width:30px;height:46px;margin-left:-15px;transform-origin:50% 100%;animation:flick .28s ease-in-out var(--f) infinite alternate}
+@keyframes flick{from{transform:scaleY(.82) scaleX(1.05)}to{transform:scaleY(1.12) scaleX(.94)}}
+.cookedhead{display:flex;align-items:center;gap:14px;padding-top:10px}
+.plate{width:84px;height:84px;border-radius:28px;display:grid;place-items:center;flex-shrink:0;animation:pop .5s cubic-bezier(.34,1.56,.64,1) both}
+.plate .ic{width:62px;height:62px;animation:float 2.6s ease-in-out infinite}
+.userow{display:flex;align-items:center;gap:12px;padding:12px;animation:rise .5s both;animation-delay:calc(.2s + var(--i) * 110ms)}
+.uicon{width:52px;height:52px;border-radius:16px;display:grid;place-items:center;flex-shrink:0}.uicon .ic{width:40px;height:40px}
+.umid{flex:1;min-width:0;display:flex;flex-direction:column;gap:6px}
+.userow .tag{font-family:var(--display);font-weight:600;font-size:13px;padding:2px 9px;border-radius:9px;background:var(--tint-pink);color:var(--pink-ink);flex-shrink:0}
+.userow .tag.gone{background:var(--sunk);color:var(--muted)}
+.ubar{height:10px;border-radius:5px;background:var(--sunk);overflow:hidden}
+.ubar span{display:block;height:100%;border-radius:5px;background:var(--c);animation:shrink 1.5s cubic-bezier(.3,.7,.3,1) both;animation-delay:calc(.7s + var(--i) * 140ms)}
+@keyframes shrink{from{width:var(--from)}to{width:var(--to)}}
+.homebtn{position:relative;overflow:hidden}
+.hcard{padding:12px;display:flex;flex-direction:column}
+.hcard .thumb{width:52px;height:52px;border-radius:16px;display:grid;place-items:center;flex-shrink:0}.hcard .thumb .ic{width:40px;height:40px}
+.hcard.undone{opacity:.6}
+.hunger{display:flex;flex-direction:column;gap:10px;padding:12px 14px}
+.hunger .bowl{flex-shrink:0;overflow:visible}
+.hunger .mound{transform-box:view-box;transform-origin:24px 17px;transform:scaleY(var(--s));transition:transform .3s cubic-bezier(.34,1.56,.64,1)}
+.hunger input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:12px;padding:0;border:0;border-radius:6px;background:linear-gradient(to right,var(--accent) var(--pct),var(--sunk) var(--pct));cursor:pointer}
+.hunger input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:30px;height:30px;border-radius:50%;background:var(--surface);border:3px solid var(--accent);box-shadow:0 3px 0 var(--accent-deep);transition:transform .15s}
+.hunger input[type=range]:active::-webkit-slider-thumb{transform:scale(1.15)}
+.hunger input[type=range]::-moz-range-thumb{width:26px;height:26px;border-radius:50%;background:var(--surface);border:3px solid var(--accent);box-shadow:0 3px 0 var(--accent-deep)}
+.optcard{gap:6px;padding:10px 8px 10px 12px}
+.optmain{flex:1;min-width:0;display:flex;align-items:center;gap:12px;text-align:left;color:inherit}
+.optside{display:flex;flex-direction:column;align-items:center;gap:3px;flex-shrink:0}
+.round.saved,.savebtn.on{background:var(--tint-mint);box-shadow:0 3px 0 var(--mint-deep)}
+.hcard .mini{font-size:12px;padding:3px 8px 3px 3px;border-radius:14px}.hcard .mini .ic{width:24px;height:24px}.hcard .mini .tag{font-size:10px;padding:1px 6px}
+.hbtn{height:36px;border-radius:18px;padding:0 14px;font-size:14px;background:var(--surface);color:var(--ink);box-shadow:0 3px 0 var(--line);outline:2px solid var(--line);outline-offset:-2px;display:inline-flex;align-items:center;gap:6px}
+.hbtn.go{background:var(--accent);color:#2A1F1A;outline:none;box-shadow:0 3px 0 var(--accent-deep)}
+.hbtn.done{background:var(--tint-mint);color:var(--mint-deep);outline:none;box-shadow:none}
+.fitcard{padding:12px 14px;box-shadow:none}.fitcard.ok{background:var(--tint-mint)}.fitcard.warn{background:var(--tint-orange)}
+.small.undo{height:38px;border-radius:19px;padding:0 14px;font-size:14px;background:var(--surface);color:var(--ink);box-shadow:0 3px 0 var(--line);outline:2px solid var(--line);outline-offset:-2px;display:flex;align-items:center;gap:6px;flex-shrink:0}
 @media (prefers-reduced-motion: reduce){*{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
 </style>
 
@@ -191,7 +250,14 @@ const FLAV = [
   { id: 'surprise',label: 'Surprise me', icon: 'dice' }
 ];
 const TIMES = [10, 20, 30, 45];
-const HERO_BG = { tomato: '#FFD9D4', tofu: '#FFF1D6', salmon: '#FFE0D4', broccoli: '#DDF5E1', lemon: '#FFF4B8', mushroom: '#FFE3D2', cheese: '#FFF0B8', chili: '#FFDAD2', bread: '#FFEBD0', egg: '#FFF4DD', chicken: '#FFE3CF', rice: '#FFE9D6', noodle: '#D7F5EC', spinach: '#DDF5E1', garlic: '#F3EADF', onion: '#EFE0F5', soy: '#E8D8CF', milk: '#E0EFFF' };
+// Appetite, 1-5: label shown on the slider, words for Claude, portion factor for the demo.
+const HUNGER = [null,
+  { label: 'Just a bite', ask: 'just a small bite, snack-sized portions', k: 0.5 },
+  { label: 'Light', ask: 'something light, smaller portions', k: 0.75 },
+  { label: 'Normal', ask: 'a normal meal, normal portions', k: 1 },
+  { label: 'Hungry', ask: 'hungry: a hearty, filling meal with generous portions', k: 1.25 },
+  { label: 'Starving', ask: 'starving: a big, very filling meal with large portions', k: 1.5 }];
+const HERO_BG = { tomato: '#FFD9D4', tofu: '#FFF1D6', salmon: '#FFE0D4', broccoli: '#DDF5E1', lemon: '#FFF4B8', mushroom: '#FFE3D2', cheese: '#FFF0B8', chili: '#FFDAD2', bread: '#FFEBD0', egg: '#FFF4DD', chicken: '#FFE3CF', rice: '#FFE9D6', noodle: '#D7F5EC', spinach: '#DDF5E1', garlic: '#F3EADF', onion: '#EFE0F5', soy: '#E8D8CF', milk: '#E0EFFF', sausage: '#FFDCD3', steak: '#FFDADA', potato: '#FBE1D2', ginger: '#FBEFD2', orange: '#FFE6C7', nut: '#F6EAD3', seeds: '#DDF3EC', spice: '#EFE7FF', grain: '#F6ECD6', pepper: '#E9E2DD', salt: '#EEF2F5', oil: '#F8F0CC', herb: '#DDF5E1', butter: '#FFF4C2', yogurt: '#FFE6EE', broth: '#F6E8D6', wrap: '#F7F0E6' };
 const S = 'stroke="#2A1F1A" stroke-width="2.5" stroke-linejoin="round"';
 const F = (x, y, w) => `<circle cx="${x}" cy="${y}" r="1.8" fill="#2A1F1A"/><circle cx="${x + w}" cy="${y}" r="1.8" fill="#2A1F1A"/><path d="M${x + 1} ${y + 5}q${w / 2 - 1} 3 ${w - 2} 0" stroke="#2A1F1A" stroke-width="1.8" fill="none" stroke-linecap="round"/>`;
 const ICONS = {
@@ -213,20 +279,51 @@ const ICONS = {
   lemon: `<ellipse cx="32" cy="34" rx="22" ry="16" fill="#FFD93D" ${S}/><circle cx="9" cy="34" r="3.5" fill="#FFD93D" ${S}/><circle cx="55" cy="34" r="3.5" fill="#FFD93D" ${S}/>${F(26, 32, 12)}<circle cx="22" cy="38" r="2.5" fill="#FFB6C1"/><circle cx="42" cy="38" r="2.5" fill="#FFB6C1"/>`,
   cheese: `<path d="M8 44L56 20v26H8z" fill="#FFC53D" ${S}/><path d="M8 44l48-24-8-6L8 34z" fill="#FFE08A" ${S}/><circle cx="20" cy="42" r="3" fill="#F5A623"/><circle cx="38" cy="38" r="2.5" fill="#F5A623"/><circle cx="48" cy="42" r="2" fill="#F5A623"/><circle cx="26" cy="35" r="1.6" fill="#2A1F1A"/><circle cx="32" cy="32" r="1.6" fill="#2A1F1A"/>`,
   milk: `<path d="M18 22l6-10h16l6 10v30a2 2 0 0 1-2 2H20a2 2 0 0 1-2-2z" fill="#FFFFFF" ${S}/><path d="M18 22h28" stroke="#2A1F1A" stroke-width="2.5"/><rect x="18" y="34" width="28" height="9" fill="#4FA8FF"/>${F(28, 29, 8)}`,
+  sausage: `<g transform="rotate(-18 32 32)"><rect x="8" y="23" width="48" height="19" rx="9.5" fill="#D9604A" ${S}/><path d="M8 32.5H3M56 32.5h5" stroke="#2A1F1A" stroke-width="2.5" stroke-linecap="round"/><path d="M17 28q5-3 10 0" stroke="#F4A28C" stroke-width="2.5" fill="none" stroke-linecap="round"/></g>${F(27, 33, 10)}`,
+  steak: `<path d="M12 24c6-11 27-13 37-5 9 7 7 21-4 27-11 6-27 6-33-2-5-6-5-14 0-20z" fill="#E66A6A" ${S}/><path d="M21 24c7-5 19-4 23 2" stroke="#FFE1D6" stroke-width="3" fill="none" stroke-linecap="round"/><circle cx="45" cy="37" r="4" fill="#FFE9DF" stroke="#2A1F1A" stroke-width="2"/>${F(22, 35, 9)}`,
+  potato: `<path d="M11 36c-2-13 10-23 24-23s21 9 19 19-12 19-25 19S13 47 11 36z" fill="#D9825B" ${S}/><circle cx="21" cy="25" r="1.7" fill="#7A3E26"/><circle cx="45" cy="27" r="1.7" fill="#7A3E26"/><circle cx="41" cy="45" r="1.7" fill="#7A3E26"/>${F(26, 34, 10)}`,
+  ginger: `<path d="M9 40c0-6 6-9 10-7 0-7 7-11 11-6 2-7 11-9 14-2 6-2 12 4 9 10 4 3 3 11-3 11H15c-4 0-6-3-6-6z" fill="#E9C27A" ${S}/><path d="M30 27c1 3 1 6 0 8M44 25c1 3 0 6-1 8" stroke="#C99A55" stroke-width="2" fill="none" stroke-linecap="round"/>${F(25, 42, 10)}`,
+  orange: `<circle cx="32" cy="36" r="19" fill="#FF9F2E" ${S}/><path d="M32 17c0-4 2-7 5-8" stroke="#2A1F1A" stroke-width="2.5" fill="none" stroke-linecap="round"/><path d="M35 14c4-6 12-6 14-2-4 5-10 5-14 2z" fill="#4CC26A" ${S}/>${F(26, 35, 12)}<circle cx="21" cy="41" r="2.4" fill="#FFB6C1"/><circle cx="43" cy="41" r="2.4" fill="#FFB6C1"/>`,
+  nut: `<path d="M44 20a12 12 0 1 1-1 0z" fill="#C99A55" ${S}/><circle cx="28" cy="36" r="17" fill="#F3DDB0" ${S}/><path d="M16 29c3-6 8-9 13-10" stroke="#D9B77A" stroke-width="3" fill="none" stroke-linecap="round"/>${F(22, 36, 12)}`,
+  seeds: `<rect x="15" y="20" width="34" height="36" rx="9" fill="#FFF8EC" ${S}/><rect x="13" y="10" width="38" height="11" rx="4" fill="#2FBF9B" ${S}/><path d="M17 42h30v5a7 7 0 0 1-7 7H24a7 7 0 0 1-7-7z" fill="#E8DCC4"/><circle cx="23" cy="47" r="1.4" fill="#2A1F1A"/><circle cx="30" cy="50" r="1.4" fill="#2A1F1A"/><circle cx="37" cy="46" r="1.4" fill="#2A1F1A"/><circle cx="42" cy="50" r="1.4" fill="#2A1F1A"/>${F(27, 31, 10)}`,
+  spice: `<rect x="17" y="20" width="30" height="36" rx="8" fill="#FFF8EC" ${S}/><path d="M19 38h26v11a5 5 0 0 1-5 5H24a5 5 0 0 1-5-5z" fill="#E8833A"/><rect x="15" y="10" width="34" height="11" rx="4" fill="#9C7BFF" ${S}/><path d="M21 15h22" stroke="#FFFFFF" stroke-width="2" stroke-dasharray="2 4" stroke-linecap="round"/>${F(27, 29, 10)}`,
+  grain: `<path d="M21 23c-7 8-9 20-7 29 1 4 4 4 18 4s17 0 18-4c2-9 0-21-7-29z" fill="#EBD3A0" ${S}/><path d="M23 23h18l-4-9H27z" fill="#EBD3A0" ${S}/><path d="M22 23h20" stroke="#2A1F1A" stroke-width="2.5" stroke-linecap="round"/><ellipse cx="44" cy="46" rx="2.5" ry="4" fill="#C99A55" transform="rotate(30 44 46)"/><ellipse cx="20" cy="47" rx="2.5" ry="4" fill="#C99A55" transform="rotate(-30 20 47)"/>${F(27, 37, 10)}`,
+  pepper: `<rect x="25" y="5" width="14" height="10" rx="4" fill="#8A5A3B" ${S}/><path d="M32 15v-2" stroke="#2A1F1A" stroke-width="2.5"/><path d="M23 17h18l3 37a3 3 0 0 1-3 3H23a3 3 0 0 1-3-3z" fill="#3A2E28" ${S}/><circle cx="28" cy="35" r="1.8" fill="#FFF8EC"/><circle cx="36" cy="35" r="1.8" fill="#FFF8EC"/><path d="M29 40q3 2.5 6 0" stroke="#FFF8EC" stroke-width="1.8" fill="none" stroke-linecap="round"/>`,
+  salt: `<path d="M21 24c0-9 5-15 11-15s11 6 11 15v29a3 3 0 0 1-3 3H24a3 3 0 0 1-3-3z" fill="#FFFFFF" ${S}/><path d="M21 26h22" stroke="#2A1F1A" stroke-width="2.5"/><circle cx="28" cy="16" r="1.4" fill="#2A1F1A"/><circle cx="32" cy="13" r="1.4" fill="#2A1F1A"/><circle cx="36" cy="16" r="1.4" fill="#2A1F1A"/>${F(27, 38, 10)}`,
+  oil: `<rect x="27" y="5" width="10" height="9" rx="3" fill="#4CC26A" ${S}/><path d="M28 14h8v7l6 7v22a6 6 0 0 1-6 6h-8a6 6 0 0 1-6-6V28l6-7z" fill="#E7C24A" ${S}/><rect x="25" y="33" width="14" height="12" rx="3" fill="#FFF8EC"/>${F(29, 38, 6)}`,
+  herb: `<path d="M32 58V22" stroke="#2F8F5B" stroke-width="3" stroke-linecap="round"/><ellipse cx="21" cy="30" rx="10" ry="6" fill="#6CCB7E" ${S} transform="rotate(-30 21 30)"/><ellipse cx="43" cy="30" rx="10" ry="6" fill="#6CCB7E" ${S} transform="rotate(30 43 30)"/><ellipse cx="21" cy="46" rx="10" ry="6" fill="#6CCB7E" ${S} transform="rotate(-30 21 46)"/><ellipse cx="43" cy="46" rx="10" ry="6" fill="#6CCB7E" ${S} transform="rotate(30 43 46)"/><ellipse cx="32" cy="15" rx="8" ry="10" fill="#6CCB7E" ${S}/>${F(28.5, 14, 7)}`,
+  butter: `<path d="M8 32l14-11h34v19L42 51H8z" fill="#FFE27A" ${S}/><path d="M8 32h34v19M42 32l14-11" ${S} fill="none"/><path d="M14 27l6-4h12" stroke="#FFF6C9" stroke-width="2.5" stroke-linecap="round" fill="none"/>${F(20, 39, 10)}`,
+  yogurt: `<path d="M16 24h32l-4 30a3 3 0 0 1-3 3H23a3 3 0 0 1-3-3z" fill="#FFFFFF" ${S}/><rect x="13" y="16" width="38" height="8" rx="3" fill="#FF8FB1" ${S}/><path d="M18 34h28" stroke="#FFD1DE" stroke-width="5"/>${F(27, 43, 10)}`,
+  broth: `<path d="M18 22l6-10h16l6 10v30a2 2 0 0 1-2 2H20a2 2 0 0 1-2-2z" fill="#F6E3C6" ${S}/><path d="M18 22h28" stroke="#2A1F1A" stroke-width="2.5"/><rect x="18" y="34" width="28" height="10" fill="#D9825B"/><path d="M27 40q2.5-2 5 0t5 0" stroke="#FFF8EC" stroke-width="1.8" fill="none" stroke-linecap="round"/>${F(28, 28, 8)}`,
+  wrap: `<circle cx="32" cy="34" r="21" fill="#FFF8EE" ${S}/><circle cx="32" cy="34" r="14" fill="none" stroke="#EADCC4" stroke-width="2"/><path d="M14 26l36 18M18 48l28-28" stroke="#EADCC4" stroke-width="1.6"/>${F(26, 32, 12)}`,
   dice: `<rect x="12" y="12" width="40" height="40" rx="11" fill="#FFFFFF" ${S}/><circle cx="23" cy="23" r="3.5" fill="#FF7A45"/><circle cx="41" cy="23" r="3.5" fill="#FF7A45"/><circle cx="32" cy="32" r="3.5" fill="#2FBF9B"/><circle cx="23" cy="41" r="3.5" fill="#FF7A45"/><circle cx="41" cy="41" r="3.5" fill="#FF7A45"/>`,
   fridge: `<rect x="12" y="6" width="40" height="52" rx="10" fill="#2FBF9B" ${S}/><path d="M12 28h40" stroke="#2A1F1A" stroke-width="2.5"/><rect x="43" y="13" width="4" height="9" rx="2" fill="#FFF"/><rect x="43" y="34" width="4" height="12" rx="2" fill="#FFF"/>${F(26, 40, 8)}`
 };
 const KEYS = Object.keys(ICONS).filter(k => k !== 'fridge' && k !== 'dice');
 // Offline guess for hand-added items: [pattern, icon, category, typical fridge days]
 const GUESS = [
-  [/egg/, 'egg', 'protein', 21], [/chicken|turkey|duck/, 'chicken', 'protein', 2], [/beef|pork|lamb|mince|steak|bacon|ham|sausage/, 'chicken', 'protein', 3],
+  [/seasoning|spice|cumin|turmeric|paprika|curry powder|cinnamon|nutmeg|five spice|garam|bouillon|stock cube/, 'spice', 'seasoning', 365],
+  [/broth|stock/, 'broth', 'seasoning', 120],
+  [/fish sauce|oyster sauce|hoisin|sriracha|sauce/, 'soy', 'seasoning', 180],
+  [/sesame seed|chia|flax|pumpkin seed|sunflower seed|\bseeds?\b/, 'seeds', 'seasoning', 365],
+  [/\boil\b/, 'oil', 'seasoning', 365], [/\bsalt\b/, 'salt', 'seasoning', 999],
+  [/^pepper$|black pepper|white pepper|peppercorn/, 'pepper', 'seasoning', 365],
+  [/oregano|basil|thyme|rosemary|parsley|\bdill\b|\bmint\b|\bsage\b|bay lea|\bherbs?\b/, 'herb', 'seasoning', 30],
+  [/\bnuts?\b|almond|cashew|walnut|peanut|macadamia|pistachio|hazelnut|pecan/, 'nut', 'other', 180],
+  [/egg/, 'egg', 'protein', 21], [/sausage|chorizo|frank|hot ?dog|salami/, 'sausage', 'protein', 7],
+  [/beef|pork|lamb|mince|steak|bacon|ham\b|pancetta|prosciutto|brisket/, 'steak', 'protein', 3],
+  [/chicken|turkey|duck/, 'chicken', 'protein', 2],
   [/tofu|tempeh/, 'tofu', 'protein', 5], [/salmon|fish|tuna|cod|prawn|shrimp|seafood|squid/, 'salmon', 'protein', 2],
-  [/rice/, 'rice', 'carbs', 365], [/noodle|pasta|spaghetti|udon|ramen|vermicelli/, 'noodle', 'carbs', 180], [/bread|bun|wrap|tortilla|bagel/, 'bread', 'carbs', 5],
-  [/potato|sweet potato/, 'rice', 'carbs', 21],
-  [/broccoli|cauliflower/, 'broccoli', 'fibre', 5], [/spinach|kale|lettuce|choy|cabbage|greens|herb|basil|cilantro|coriander/, 'spinach', 'fibre', 4],
-  [/tomato/, 'tomato', 'fibre', 7], [/mushroom/, 'mushroom', 'fibre', 4], [/onion|shallot|leek/, 'onion', 'fibre', 30],
-  [/garlic|ginger/, 'garlic', 'seasoning', 60], [/chil+i|pepper/, 'chili', 'seasoning', 10], [/soy|sauce|oil|vinegar|miso|paste/, 'soy', 'seasoning', 365],
-  [/lemon|lime/, 'lemon', 'seasoning', 21], [/cheese/, 'cheese', 'dairy', 21], [/milk|yogh?urt|cream|butter/, 'milk', 'dairy', 7]
+  [/sweet potato|potato|yam/, 'potato', 'carbs', 21], [/rice paper|tortilla|\bwraps?\b/, 'wrap', 'carbs', 365],
+  [/\boats?\b|granola|muesli|flour|quinoa|barley|couscous/, 'grain', 'carbs', 180],
+  [/rice/, 'rice', 'carbs', 365], [/noodle|pasta|spaghetti|udon|ramen|vermicelli|macaroni|penne/, 'noodle', 'carbs', 180], [/bread|bun|bagel|toast/, 'bread', 'carbs', 5],
+  [/broccoli|cauliflower/, 'broccoli', 'fibre', 5], [/spinach|kale|lettuce|choy|cabbage|greens|cilantro|coriander/, 'spinach', 'fibre', 4],
+  [/tomato/, 'tomato', 'fibre', 7], [/mushroom/, 'mushroom', 'fibre', 4], [/onion|shallot|leek|scallion/, 'onion', 'fibre', 30],
+  [/orange|mandarin|clementine|tangerine/, 'orange', 'fibre', 14],
+  [/ginger/, 'ginger', 'seasoning', 21], [/garlic/, 'garlic', 'seasoning', 60], [/chil+i|bell pepper|capsicum/, 'chili', 'seasoning', 10],
+  [/soy|sauce|vinegar|miso|paste|teriyaki|ketchup|mayo/, 'soy', 'seasoning', 180],
+  [/lemon|lime/, 'lemon', 'seasoning', 21], [/cheese|cheddar|parmesan|mozzarella/, 'cheese', 'dairy', 21],
+  [/butter/, 'butter', 'dairy', 30], [/yogh?urt/, 'yogurt', 'dairy', 10], [/milk|cream/, 'milk', 'dairy', 7]
 ];
 const guessFor = name => { const n = String(name).toLowerCase(); const g = GUESS.find(([re]) => re.test(n)); return g ? { icon: g[1], cat: g[2], shelf: g[3] } : null; };
 const CAT_ICON = { protein: 'chicken', carbs: 'bread', fibre: 'spinach', seasoning: 'soy', dairy: 'milk', other: 'rice' };
@@ -237,6 +334,7 @@ const SVG = {
   minus: '<svg width="14" height="14" viewBox="0 0 24 24" stroke="#2A1F1A" stroke-width="3.5" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14"/></svg>',
   plusS: '<svg width="14" height="14" viewBox="0 0 24 24" stroke="#2A1F1A" stroke-width="3.5" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14M12 5v14"/></svg>',
   check: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 8"/></svg>',
+  undo: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 14L4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg>',
   arrow: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>',
   back: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M11 18l-6-6 6-6"/></svg>',
   x: '<svg width="20" height="20" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>',
@@ -254,9 +352,9 @@ const SVG = {
 // ───────────────────────── state ─────────────────────────
 const DAY = 86400000;
 const st = {
-  items: [], recipes: [], servings: 2, loaded: false,
+  items: [], recipes: [], history: [], servings: 2, loaded: false,
   screen: 'fridge', mode: 'select', filter: 'all', selected: {}, flavour: null, time: 20,
-  recipe: null, options: null, recipeBack: null, shown: [], rtab: 'saved', toast: null, sheet: null, busy: null, err: null,
+  hunger: 3, recipe: null, options: null, recipeBack: null, shown: [], rtab: 'saved', toast: null, sheet: null, busy: null, err: null,
   scan: { files: [], preview: null, detected: null }, ai: null, canImage: false, db: null, synced: false
 };
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -284,8 +382,8 @@ const lsSet = (k, v) => { try { v == null ? localStorage.removeItem(k) : localSt
 const passcode = () => lsGet(KEY) || '';
 const remoteOn = () => !DEMO && !IN_CLAUDE && !!(CFG.workerUrl && passcode());
 let localUpdatedAt = 0;
-function cacheLocal() { lsSet(LS, JSON.stringify({ items: st.items, recipes: st.recipes, servings: st.servings, updatedAt: localUpdatedAt })); }
-function loadLocal() { try { const j = JSON.parse(lsGet(LS) || 'null'); if (j) { st.items = j.items || []; st.recipes = j.recipes || []; st.servings = j.servings || 2; localUpdatedAt = j.updatedAt || 0; } } catch (e) {} st.loaded = true; }
+function cacheLocal() { lsSet(LS, JSON.stringify({ items: st.items, recipes: st.recipes, history: st.history, servings: st.servings, updatedAt: localUpdatedAt })); }
+function loadLocal() { try { const j = JSON.parse(lsGet(LS) || 'null'); if (j) { st.items = j.items || []; st.recipes = j.recipes || []; st.history = j.history || []; st.servings = j.servings || 2; localUpdatedAt = j.updatedAt || 0; } } catch (e) {} st.loaded = true; }
 function api(path, opts = {}) {
   return fetch(CFG.workerUrl.replace(/\/+$/, '') + path, Object.assign({}, opts, { headers: { 'content-type': 'application/json', 'x-fridge-key': passcode() }, credentials: 'omit', referrerPolicy: 'no-referrer' }));
 }
@@ -297,7 +395,7 @@ function persist() {
   clearTimeout(saveT);
   saveT = setTimeout(async () => {
     try {
-      const r = await api('/data', { method: 'PUT', body: JSON.stringify({ items: st.items, recipes: st.recipes, servings: st.servings, updatedAt: localUpdatedAt }) });
+      const r = await api('/data', { method: 'PUT', body: JSON.stringify({ items: st.items, recipes: st.recipes, history: st.history, servings: st.servings, updatedAt: localUpdatedAt }) });
       if (r.status === 401) toast('Passcode rejected. Check Settings.');
       else if (!r.ok) toast('Saved on this phone. Sync failed.');
     } catch (e) { toast('Offline. Saved on this phone.'); }
@@ -312,7 +410,7 @@ async function pull() {
     const d = await r.json();
     st.syncState = 'ok';
     if (d && Array.isArray(d.items) && (d.updatedAt || 0) > localUpdatedAt) {
-      st.items = d.items; st.recipes = d.recipes || []; st.servings = d.servings || st.servings; localUpdatedAt = d.updatedAt; cacheLocal();
+      st.items = d.items; st.recipes = d.recipes || []; st.history = d.history || []; st.servings = d.servings || st.servings; localUpdatedAt = d.updatedAt; cacheLocal();
     } else if ((d.updatedAt || 0) < localUpdatedAt) persist();
     render();
   } catch (e) {}
@@ -397,7 +495,7 @@ const DEMO_DISHES = [
   { name: 'Loaded {v} omelette', flav: ['comfort', 'cheesy'], time: 10, needs: 'egg', steps: ['Beat the eggs with a pinch of salt', 'Soften the {v} in a pan', 'Pour in the eggs and fold when just set', 'Serve with {c}'] }
 ];
 function demoPortion(it) {
-  const s = st.servings, c = catOf(it.cat);
+  const s = st.servings * HUNGER[st.hunger].k, c = catOf(it.cat);
   const q = it.unit === 'g' ? ({ protein: 150, carbs: 90, fibre: 100, dairy: 60, seasoning: 10 }[c] || 80) * s
     : it.unit === 'ml' ? 15 * s : it.unit === 'pcs' ? Math.max(1, Math.ceil(s * (c === 'protein' ? 1 : 0.5)))
     : it.unit === 'cloves' ? 2 : it.unit === 'fillets' ? s : it.unit === 'slices' ? s : 1;
@@ -458,6 +556,7 @@ const demoAi = {
     if (/^These photos show groceries/.test(prompt)) { await wait(1800); return DEMO_SCAN.map(x => Object.assign({}, x)); }
     if (/^I just bought these groceries/.test(prompt)) { await wait(1100); return demoList((prompt.match(/<<<\n([\s\S]*?)\n>>>/) || [])[1] || ''); }
     if (/^You are suggesting 3 different/.test(prompt)) { await wait(2200); return demoIdeas(); }
+    if (/^Adapt this recipe/.test(prompt)) { await wait(1500); return localAdapt(st.recipe); }
     if (/^Extract a cooking recipe/.test(prompt)) { await wait(1400); return demoRecipe(prompt.split('\n\nTEXT:\n')[1] || ''); }
     const m = prompt.match(/^For the grocery item "([^"]*)"/);
     if (m) { await wait(600); const x = demoLine(m[1]) || { name: m[1], cat: 'other', shelfDays: 7, icon: null, unit: 'pcs' }; return Object.assign(x, { qty: 1 }); }
@@ -490,7 +589,7 @@ function seedDemo() {
       ingredients: [ing('Eggs', 4, 'pcs', 'protein'), ing('Cherry tomatoes', 10, 'pcs', 'fibre'), ing('Onion', 1, 'pcs', 'fibre'), ing('Chili', 1, 'pcs', 'seasoning'), ing('Garlic', 2, 'cloves', 'seasoning')],
       steps: ['Soften onion, garlic and chili', 'Add the tomatoes and simmer 10 min', 'Make wells and crack in the eggs', 'Cover until the whites set'] }
   ];
-  st.servings = 2; persist('items');
+  st.history = []; st.servings = 2; persist('items');
 }
 
 // ───────────────────────── Claude artifact runtime ─────────────────────────
@@ -521,35 +620,42 @@ async function connectClaude() {
   render();
 }
 let cdb = null, prefsSynced = null, syncing = false, syncAgain = false;
-const synced = { items: new Map(), recipes: new Map() }, dbReady = { items: false, recipes: false };
-function softRender() { if (st.sheet) app.innerHTML = (DEMO ? demoBar() : '') + viewFor()(); else render(); }
+const synced = { items: new Map(), recipes: new Map(), history: new Map() }, dbReady = { items: false, recipes: false, history: false };
+// The store hands records back with keys in its own order; compare by value so our own saves are not mistaken for changes.
+const canon = x => JSON.stringify(x, (k, v) => v && typeof v === 'object' && !Array.isArray(v) ? Object.keys(v).sort().reduce((o, key) => (o[key] = v[key], o), {}) : v);
+const colList = col => col === 'items' ? st.items : col === 'recipes' ? st.recipes : st.history;
+const dbAllReady = () => dbReady.items && dbReady.recipes && dbReady.history;
+function softRender() { if (st.screen === 'cooking' || st.screen === 'cooked') return; if (st.sheet) { app.classList.add('calm'); app.innerHTML = (DEMO ? demoBar() : '') + viewFor()(); } else render(); }
 async function connectClaudeDb() {
   cdb = await window.claude.use('db').catch(() => null);
   if (!cdb) { st.dbState = 'off'; st.loaded = true; render(); return; }
   window.claude.use('user').then(u => u && u.can('data.write')).then(ok => { if (ok === false) { st.readOnly = true; render(); } }).catch(() => {});
   const listen = (col, apply) => cdb.collection(col).onSnapshot(snap => {
     const list = snap.docs.map(d => Object.assign({}, d.data()));
+    const before = canon(colList(col));
     apply(list);
-    synced[col] = new Map(list.map(x => [x.id, JSON.stringify(x)]));
+    const same = before === canon(colList(col));
+    synced[col] = new Map(list.map(x => [x.id, canon(x)]));
     if (!snap.metadata.fromCache) dbReady[col] = true;
-    if (dbReady.items && dbReady.recipes) { st.loaded = true; st.dbState = 'live'; }
-    cacheLocal(); softRender();
+    if (dbAllReady()) { st.loaded = true; st.dbState = 'live'; }
+    cacheLocal(); if (!same || !st.loaded) softRender(); else if (st.loaded && !app.querySelector('.tile, .empty h2')) softRender();
   }, () => { st.dbState = 'off'; st.loaded = true; render(); });
   listen('items', list => { st.items = list.sort((a, b) => ((a.ord || 0) - (b.ord || 0)) || String(a.id).localeCompare(b.id)); Object.keys(st.selected).forEach(k => { if (!item(k)) delete st.selected[k]; }); });
   listen('recipes', list => { st.recipes = list.sort((a, b) => (b.savedAt || 0) - (a.savedAt || 0)); });
-  cdb.doc('prefs/household').onSnapshot(s => { if (s.exists) { const v = Number(s.data().servings); if (v >= 1 && v <= 6) { st.servings = v; prefsSynced = v; softRender(); } } }, () => {});
+  listen('history', list => { st.history = list.sort((a, b) => (b.at || 0) - (a.at || 0)); });
+  cdb.doc('prefs/household').onSnapshot(s => { if (s.exists) { const v = Number(s.data().servings); if (v >= 1 && v <= 6) { prefsSynced = v; if (v !== st.servings) { st.servings = v; softRender(); } } } }, () => {});
 }
 async function syncDb() {
-  if (!cdb || st.readOnly || !dbReady.items || !dbReady.recipes) return;
+  if (!cdb || st.readOnly || !dbAllReady()) return;
   if (syncing) { syncAgain = true; return; }
   syncing = true;
   try {
     do {
       syncAgain = false;
-      for (const [col, list] of [['items', st.items], ['recipes', st.recipes]]) {
+      for (const [col, list] of [['items', st.items], ['recipes', st.recipes], ['history', st.history]]) {
         const m = synced[col], seen = new Set();
         for (const x of list) {
-          seen.add(x.id); const j = JSON.stringify(x);
+          seen.add(x.id); const j = canon(x);
           if (m.get(x.id) !== j) { await cdb.collection(col).doc(x.id).set(JSON.parse(j)); m.set(x.id, j); }
         }
         for (const id of [...m.keys()]) if (!seen.has(id)) { await cdb.collection(col).doc(id).delete(); m.delete(id); }
@@ -641,7 +747,7 @@ async function generate(excludeNames) {
 FRIDGE (only use these; never exceed the amounts listed):
 ${fridgeText()}
 PICKED (must feature these): ${sel.length ? sel.map(id => item(id).name).join(', ') : 'none — you choose, prefer USE SOON items'}
-Seasoning from the fridge may be added freely even if not picked. People eating: ${st.servings}. Max cooking time: ${st.time} min. Flavour: ${flav === 'surprise' ? 'anything, be varied' : flav}.
+Seasoning from the fridge may be added freely even if not picked. People eating: ${st.servings}. Appetite: ${HUNGER[st.hunger].ask}; scale the amounts to match. Max cooking time: ${st.time} min. Flavour: ${flav === 'surprise' ? 'anything, be varied' : flav}.
 Keep each one quick and easy: few steps, simple techniques, within the time limit.
 Aim for a balanced plate (a protein, a carb, a vegetable/fibre) using what is there; prefer USE SOON items.
 ${excludeNames && excludeNames.length ? 'Do NOT suggest these again: ' + excludeNames.join('; ') + '.' : ''}
@@ -666,7 +772,7 @@ async function importRecipe(text) {
   const prompt = `Extract a cooking recipe from the text below (it may be an Instagram caption, a pasted web page, a URL, or my own notes). If it is only a URL, infer the dish from the URL and your knowledge. Reply with ONLY one JSON object: {"name": dish name, "time": minutes (number), "flavour": one of ["spicy","comfort","fresh","umami","cheesy","surprise"], "hero": one of ${JSON.stringify(KEYS)}, "ingredients": [{"name": string, "qty": number, "unit": one of ${JSON.stringify(UNITS)}, "cat": one of ["protein","carbs","fibre","seasoning","dairy","other"]}], "steps": [short imperative steps], "servings": number}.\n\nTEXT:\n${text.slice(0, 12000)}`;
   try {
     const r = await st.ai.json(prompt);
-    const rec = { id: 'r-' + Date.now(), name: String(r.name || 'Untitled').slice(0, 60), time: Number(r.time) || 20, flavour: FLAV.some(f => f.id === r.flavour) ? r.flavour : 'comfort', hero: ICONS[r.hero] ? r.hero : 'rice', ingredients: (Array.isArray(r.ingredients) ? r.ingredients : []).map(x => ({ name: String(x.name || '').slice(0, 40), qty: Number(x.qty) || 1, unit: UNITS.includes(x.unit) ? x.unit : 'pcs', cat: catOf(x.cat) })).filter(x => x.name), steps: (Array.isArray(r.steps) ? r.steps : []).map(String), servings: Number(r.servings) || 2, src: st.rtab === 'insta' ? 'insta' : 'saved', savedAt: Date.now() };
+    const rec = { id: 'r-' + Date.now(), name: String(r.name || 'Untitled').slice(0, 60), time: Number(r.time) || 20, flavour: FLAV.some(f => f.id === r.flavour) ? r.flavour : 'comfort', hero: ICONS[r.hero] ? r.hero : 'rice', ingredients: (Array.isArray(r.ingredients) ? r.ingredients : []).map(x => ({ name: String(x.name || '').slice(0, 40), qty: Number(x.qty) || 1, unit: UNITS.includes(x.unit) ? x.unit : 'pcs', cat: catOf(x.cat) })).filter(x => x.name), steps: (Array.isArray(r.steps) ? r.steps : []).map(String), servings: Number(r.servings) || 2, src: st.rtab === 'insta' ? 'insta' : st.rtab === 'mine' ? 'mine' : 'saved', savedAt: Date.now() };
     st.recipes.unshift(rec); persist('recipes'); st.sheet = null; toast('Recipe saved');
   } catch (e) { st.err = aiErr(e); }
   st.busy = null; render();
@@ -682,6 +788,68 @@ async function autofill(name) {
 function matchIngredient(name) {
   const n = name.toLowerCase();
   return st.items.find(i => i.qty > 0 && (n.includes(i.name.toLowerCase()) || i.name.toLowerCase().includes(n) || i.id === slug(name)));
+}
+// Older history entries have no recipe snapshot: rebuild one from what was used.
+function histRecipe(h) {
+  return h.recipe || { name: h.name, hero: h.hero, time: 20, flavour: 'comfort', steps: [], servings: st.servings, ingredients: h.rows.map(x => ({ name: x.name, qty: x.used, unit: x.unit, cat: x.cat })) };
+}
+// For a recipe with an ingredient list: what the fridge has, is short on, or is missing.
+function fridgeCheck(r) {
+  if (!r.ingredients || !r.ingredients.length) return null;
+  const scale = st.servings / (r.servings || st.servings || 2);
+  return r.ingredients.map(g => {
+    const it = matchIngredient(g.name), need = Math.round(g.qty * scale * 10) / 10;
+    if (!it) return { g, need, state: 'missing' };
+    if (it.unit === g.unit && it.qty < need) return { g, it, need, state: 'short' };
+    return { g, it, need, state: 'have' };
+  });
+}
+// Same idea without Claude: swap each missing ingredient for one from the same food group.
+function localAdapt(r) {
+  const check = fridgeCheck(r) || [], uses = {}, changes = []; let steps = (r.steps || []).slice(), name = r.name;
+  check.filter(c => c.it).forEach(c => { uses[c.it.id] = c.state === 'short' ? c.it.qty : c.it.unit === c.g.unit ? Math.min(c.it.qty, c.need) : Math.min(c.it.qty, stepOf(c.it)); if (c.state === 'short') changes.push(`Using all ${qtyLabel(c.it)} of ${c.it.name}`); });
+  check.filter(c => c.state === 'missing').forEach(c => {
+    const sub = st.items.filter(x => x.qty > 0 && catOf(x.cat) === catOf(c.g.cat) && uses[x.id] == null).sort((a, b) => daysLeft(a) - daysLeft(b))[0];
+    if (sub) {
+      uses[sub.id] = sub.unit === c.g.unit ? Math.min(sub.qty, c.need) : Math.min(sub.qty, Math.max(stepOf(sub), sub.unit === 'g' ? 100 * st.servings : 1));
+      changes.push(`${sub.name} instead of ${c.g.name}`);
+      const re = new RegExp(c.g.name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi'); steps = steps.map(t => t.replace(re, sub.name.toLowerCase())); name = name.replace(re, m => m[0] === m[0].toUpperCase() ? titleCase(sub.name) : sub.name.toLowerCase());
+    } else changes.push(`Skipping ${c.g.name}`);
+  });
+  return { name, time: r.time, flavour: r.flavour, hero: r.hero, uses, steps: steps.length ? steps : ['Prep everything', 'Cook until done', 'Serve'], changes };
+}
+async function adaptRecipe() {
+  const r = st.recipe; if (!r) return;
+  st.busy = 'adapt'; st.err = null; render();
+  const prompt = `Adapt this recipe so it can be cooked right now from my fridge.
+RECIPE: ${JSON.stringify({ name: r.name, servings: r.servings, ingredients: r.ingredients, steps: r.steps })}
+FRIDGE (only use these; never exceed the amounts listed):
+${fridgeText()}
+Cooking for ${st.servings} people. Keep the dish's spirit. Replace missing or short ingredients with ones from the fridge that play the same role (protein for protein, and so on), leave out optional ones, and rewrite the steps to match.
+Reply with ONLY one JSON object: {"name": dish name (max 6 words), "time": minutes (number), "flavour": one of ["spicy","comfort","fresh","umami","cheesy","surprise"], "hero": one of ${JSON.stringify(KEYS)}, "uses": {"<fridge id>": amount as a number in that item's own unit, scaled for ${st.servings} people}, "steps": 3 to 6 short imperative steps, "nutrients": {"protein": true|false, "carbs": true|false, "fibre": true|false}, "changes": up to 4 short notes such as "Chicken thigh instead of salmon"}`;
+  try {
+    const x = st.ai ? await st.ai.json(prompt, { cache: false }) : localAdapt(r);
+    const uses = {};
+    Object.keys(x.uses || {}).forEach(k => { const it = item(k); const q = Number(x.uses[k]); if (it && q > 0) uses[k] = Math.min(it.qty, Math.max(stepOf(it) / 2, Math.round(q * 10) / 10)); });
+    if (!Object.keys(uses).length) throw { code: 'empty_completion' };
+    st.recipe = { id: 'a-' + Date.now(), src: 'generated', adapted: true, from: r.name, name: String(x.name || r.name).slice(0, 60), time: Number(x.time) || r.time || 20,
+      flavour: FLAV.some(f => f.id === x.flavour) ? x.flavour : r.flavour, hero: ICONS[x.hero] ? x.hero : r.hero, uses,
+      steps: (Array.isArray(x.steps) ? x.steps : []).slice(0, 8).map(String), nutrients: x.nutrients || {}, servings: st.servings,
+      changes: (Array.isArray(x.changes) ? x.changes : []).slice(0, 4).map(c => String(c).slice(0, 60)) };
+    window.scrollTo(0, 0);
+  } catch (e) { st.err = aiErr(e); }
+  st.busy = null; render();
+}
+function checkHtml(r) {
+  if (r.adapted) return `<div class="card fitcard ok" style="margin-top:14px"><div class="row" style="gap:8px">${SVG.swap}<span class="ff" style="font-size:16px">Adapted to your fridge</span></div>${r.changes && r.changes.length ? `<div class="pill-row" style="margin-top:8px;gap:6px">${r.changes.map(c => `<span class="spill" style="height:30px;font-size:13px">${esc(c)}</span>`).join('')}</div>` : ''}<p class="note" style="margin:8px 0 0">From your recipe “${esc(r.from)}”.</p></div>`;
+  const check = r.src !== 'generated' && fridgeCheck(r); if (!check) return '';
+  const bad = check.filter(c => c.state !== 'have');
+  if (!bad.length) return `<div class="card fitcard ok" style="margin-top:14px"><div class="row" style="gap:8px">${SVG.check}<span class="ff" style="font-size:16px">You have everything for ${st.servings} ${st.servings === 1 ? 'person' : 'people'}</span></div></div>`;
+  const miss = bad.filter(c => c.state === 'missing').length, short = bad.length - miss;
+  return `<div class="card fitcard warn" style="margin-top:14px"><div class="ff" style="font-size:16px">${[miss ? miss + ' missing' : '', short ? short + ' running short' : ''].filter(Boolean).join(' · ')}</div>
+    <div class="pill-row" style="margin-top:8px;gap:6px">${bad.map(c => `<span class="spill ${c.state === 'missing' ? 'dim' : ''}" style="height:30px;font-size:13px">${esc(c.g.name)}${c.state === 'short' ? ` · have ${esc(qtyLabel(c.it))}, need ${esc(String(c.need))}` : ''}</span>`).join('')}</div>
+    ${st.err && st.busy !== 'adapt' ? `<div class="err" style="margin-top:8px">${esc(st.err)}</div>` : ''}
+    <button class="cta ink" style="height:50px;font-size:16px;margin-top:10px" data-act="adapt" ${st.busy === 'adapt' ? 'disabled' : ''}>${SVG.swap}${st.busy === 'adapt' ? 'Adapting…' : st.ai && !DEMO ? 'Adapt to my fridge with Claude' : 'Adapt to my fridge'}</button></div>`;
 }
 function usesFromSaved(rec) {
   const uses = {}; const scale = st.servings / (rec.servings || 2);
@@ -735,32 +903,44 @@ function viewFridge() {
       if (fin) return `<div class="tile fin" ${d}>${ik}<span class="nm" style="color:var(--muted)">${esc(i.name)}</span><button class="small" data-act="restock" data-id="${i.id}">${SVG.plusS}Restock</button></div>`;
       if (edit) return `<div class="tile edit" ${d}>${pillFor(i)}<button class="round" style="position:absolute;top:6px;right:6px;width:28px;height:28px;box-shadow:none;background:var(--tint-pink);color:var(--pink-ink)" data-act="remove" data-id="${i.id}" aria-label="Remove ${esc(i.name)}">${SVG.x}</button>${ik}<span class="nm">${esc(i.name)}</span><div class="step"><button class="m" data-act="dec" data-id="${i.id}" aria-label="Less ${esc(i.name)}">${SVG.minus}</button><span>${qtyLabel(i)}</span><button class="p" data-act="inc" data-id="${i.id}" aria-label="More ${esc(i.name)}">${SVG.plusS}</button></div></div>`;
       const on = !!st.selected[i.id];
-      return `<button class="tile ${on ? 'sel' : ''}" ${d} data-act="pick" data-id="${i.id}" aria-pressed="${on}" aria-label="${esc(i.name)}, ${qtyLabel(i)} (hold to edit)">${pillFor(i)}${on ? `<svg class="chk" width="28" height="28" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="11" fill="#FF7A45" stroke="#FFF6E9" stroke-width="2"/><path d="M7 12.5l3.5 3.5L17 9" stroke="#2A1F1A" stroke-width="2.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>` : ''}${ik}<span class="nm">${esc(i.name)}</span><span class="qt">${qtyLabel(i)}</span></button>`;
+      return `<button class="tile ${on ? 'sel' : ''}" ${d} data-act="pick" data-id="${i.id}" aria-pressed="${on}" aria-label="${esc(i.name)}, ${qtyLabel(i)} (hold to edit)">${pillFor(i)}${on ? `${CHK_SVG}` : ''}${ik}<span class="nm">${esc(i.name)}</span><span class="qt">${qtyLabel(i)}</span></button>`;
     }).join('') + `</div>`;
   }
-  // bottom stack: gaps + CTA
+  const stack = fridgeStack();
+  return h + (stack ? `<div class="stack">${stack}</div>` : '') + nav('fridge');
+}
+// Bottom of the fridge screen: missing food groups + the Cook button.
+function fridgeStack() {
   let stack = '';
-  if (!edit && !fin && st.items.length) {
+  if (st.mode !== 'edit' && st.filter !== 'finished' && st.items.length) {
+    const sel = selIds();
     const haveCats = sel.map(id => catOf(item(id).cat));
     const missing = sel.length ? ['protein', 'carbs', 'fibre'].filter(c => !haveCats.includes(c)) : [];
     const gapItems = [];
     missing.forEach(c => st.items.filter(i => catOf(i.cat) === c && i.qty > 0 && !st.selected[i.id]).sort((a, b) => daysLeft(a) - daysLeft(b)).slice(0, 2).forEach(i => gapItems.push({ i, c })));
     if (gapItems.length) stack += `<div class="card" style="display:flex;flex-direction:column;gap:8px"><div class="row" style="font-size:13px;color:var(--muted)">${SVG.info}Missing ${missing.map(c => `<span class="spill" style="height:26px;font-size:12px;padding:0 8px;background:${CATS[c].bg};color:#2A1F1A"><span class="dot" style="width:7px;height:7px;border-radius:50%;background:${CATS[c].color};display:block"></span>${CATS[c].label}</span>`).join('')}</div><div class="hrow">${gapItems.map(({ i, c }) => `<button class="mini" style="background:${CATS[c].bg};color:#2A1F1A;outline:2px solid ${CATS[c].color};outline-offset:-2px;height:44px" data-act="pick" data-id="${i.id}">${icon(iconOf(i))}${esc(i.name)}${daysLeft(i) <= 2 ? `<span class="tag" style="background:var(--sun)">${daysLabel(daysLeft(i))}</span>` : ''}${SVG.plusS}</button>`).join('')}</div></div>`;
-    stack += sel.length
-      ? `<button class="cta ink" data-act="craving">${SVG.flame.replace('width="16" height="16"', 'width="24" height="24"')}Cook<span class="num">${sel.length}</span>${SVG.arrow}</button>`
-      : `<button class="cta ink" data-act="craving">${icon('dice', 'ic').replace('class="ic"', 'style="width:30px;height:30px"')}Surprise me${SVG.arrow}</button>`;
+    if (sel.length) stack += `<button class="cta ink" data-act="craving">${SVG.flame.replace('width="16" height="16"', 'width="24" height="24"')}Cook<span class="num">${sel.length}</span>${SVG.arrow}</button>`;
   }
-  return h + (stack ? `<div class="stack">${stack}</div>` : '') + nav('fridge');
+  return stack;
+}
+function hungerHtml() {
+  const v = st.hunger, pct = (v - 1) * 25;
+  return `<div class="card hunger" style="margin-top:18px;--pct:${pct}%">
+    <div class="row" style="gap:12px"><svg class="bowl" viewBox="0 0 48 40" width="52" height="44" style="--s:${v / 5}" aria-hidden="true"><ellipse class="mound" cx="24" cy="17" rx="17" ry="12" fill="#FFB061" stroke="#2A1F1A" stroke-width="2.2"/><path d="M4 17h40c0 11-9 19-20 19S4 28 4 17z" fill="#FF7A45" stroke="#2A1F1A" stroke-width="2.5" stroke-linejoin="round"/><path d="M12 25h24" stroke="#FFF6E9" stroke-width="3" stroke-linecap="round" opacity=".5"/></svg>
+    <div style="flex:1;min-width:0"><label for="hunger" class="ff" style="font-size:17px">How hungry?</label><div class="sub hlabel" style="font-size:14px">${HUNGER[v].label}</div></div></div>
+    <input type="range" id="hunger" min="1" max="5" step="1" value="${v}" aria-valuetext="${HUNGER[v].label}">
+    <div class="row" style="justify-content:space-between;font-size:12px;color:var(--muted);font-weight:700"><span>Light</span><span>Heavy</span></div></div>`;
 }
 function viewCraving() {
-  let h = `<div class="head"><div class="hl"><button class="round" data-act="go" data-to="fridge" aria-label="Back">${SVG.back}</button><h1>Craving?</h1></div></div>`;
+  let h = `<div class="head"><div class="hl"><button class="round" data-act="go" data-to="${st.cravingBack || 'fridge'}" aria-label="Back">${SVG.back}</button><h1>Craving?</h1></div></div>`;
   if (st.err) h += `<div class="err" style="margin-bottom:12px">${esc(st.err)}</div>`;
   const sel = selIds();
   h += sel.length
     ? `<div class="hrow" style="margin-bottom:14px">${sel.map(id => { const it = item(id); return `<div class="mini" style="background:${CATS[catOf(it.cat)].bg};color:#2A1F1A;box-shadow:none">${icon(iconOf(it))}${esc(it.name)}</div>`; }).join('')}</div>`
     : `<div class="card row" style="margin-bottom:14px;gap:10px">${icon('dice', 'ic').replace('class="ic"', 'style="width:40px;height:40px;flex-shrink:0"')}<span style="font-size:14px">I'll pick from your fridge, starting with what's about to spoil.</span></div>`;
   h += `<div class="grid" style="grid-template-columns:repeat(2,minmax(0,1fr));gap:12px">${FLAV.map((f, i) => `<button class="crav ${st.flavour === f.id ? 'on' : ''}" style="animation-delay:${i * 45}ms;${st.flavour === f.id ? 'background:' + HERO_BG[f.icon] + ';color:#2A1F1A' : ''}" data-act="flav" data-id="${f.id}" aria-pressed="${st.flavour === f.id}">${icon(f.icon)}${f.label}</button>`).join('')}</div>`;
-  h += `<div class="card row" style="margin-top:18px"><div class="people">${Array.from({ length: 6 }, (_, k) => SVG.person(k < st.servings ? '#FFC53D' : 'var(--sunk)')).join('')}</div><span class="ff" style="font-size:17px">${st.servings} ${st.servings === 1 ? 'person' : 'people'}</span><div class="row" style="margin-left:auto;gap:6px"><button class="round" style="width:40px;height:40px;background:var(--tint-orange);box-shadow:none" data-act="people" data-d="-1" aria-label="Fewer people">${SVG.minus}</button><button class="round" style="width:40px;height:40px;background:var(--tint-mint);box-shadow:none" data-act="people" data-d="1" aria-label="More people">${SVG.plusS}</button></div></div>`;
+  h += hungerHtml();
+  h += `<div class="card row" style="margin-top:12px"><div class="people">${Array.from({ length: 6 }, (_, k) => SVG.person(k < st.servings ? '#FFC53D' : 'var(--sunk)')).join('')}</div><span class="ff" style="font-size:17px">${st.servings} ${st.servings === 1 ? 'person' : 'people'}</span><div class="row" style="margin-left:auto;gap:6px"><button class="round" style="width:40px;height:40px;background:var(--tint-orange);box-shadow:none" data-act="people" data-d="-1" aria-label="Fewer people">${SVG.minus}</button><button class="round" style="width:40px;height:40px;background:var(--tint-mint);box-shadow:none" data-act="people" data-d="1" aria-label="More people">${SVG.plusS}</button></div></div>`;
   h += `<div style="margin-top:20px"><div class="row" style="margin-bottom:10px">${SVG.clock}<span class="ff" style="font-size:17px">Time I have</span><span class="sub" style="margin-left:auto;font-size:14px">${st.time} min</span></div><div class="row" style="gap:8px">${TIMES.map(t => `<button class="timec ${st.time === t ? 'on' : ''}" data-act="time" data-t="${t}">${t} min</button>`).join('')}</div></div>`;
   const saved = savedMatches();
   if (saved.length) h += `<div style="margin-top:22px"><div class="row" style="margin-bottom:10px">${SVG.book}<span class="ff" style="font-size:17px">From your recipes</span></div><div style="display:flex;flex-direction:column;gap:10px">${saved.map(({ r, pct }, i) => `<div class="card rcard" style="animation:rise .4s both;animation-delay:${i * 40}ms"><div class="thumb" style="background:${HERO_BG[r.hero] || '#FFF4DD'}">${icon(r.hero)}</div><div style="flex:1;min-width:0"><div class="ff" style="font-size:16px;line-height:1.1">${esc(r.name)}</div><div class="row" style="gap:6px;margin-top:6px;font-size:12px;color:var(--muted)">${SVG.clock}${r.time} min</div></div>${ringHtml(pct)}<button class="round accent" style="width:44px;height:44px" data-act="openrecipe" data-id="${r.id}" data-from="craving" aria-label="Open ${esc(r.name)}">${SVG.arrow}</button></div>`).join('')}</div></div>`;
@@ -768,16 +948,110 @@ function viewCraving() {
   h += st.ai
     ? `<div class="stack"><button class="cta prime pulse" data-act="cook">${SVG.flame.replace('width="16" height="16"', 'width="24" height="24"').replace('fill="#FF7A45"', 'fill="#2A1F1A"')}Show me recipes</button></div>`
     : `<div class="stack"><div class="card warm"><div class="ff" style="font-size:16px">New recipe ideas need AI</div><p class="note" style="margin:4px 0 0;color:inherit">${aiOffMsg()}${saved.length ? ' Your saved recipes above still work.' : ''}</p></div>${aiFixButton()}</div>`;
-  return h + nav('fridge');
+  return h + nav(st.cravingBack || 'fridge');
 }
 function viewOptions() {
   if (!st.options || !st.options.length) { st.screen = 'craving'; return viewCraving(); }
   let h = `<div class="head"><div class="hl"><button class="round" data-act="go" data-to="craving" aria-label="Back">${SVG.back}</button><h1>Pick one</h1></div></div>`;
   if (st.err) h += `<div class="err" style="margin-bottom:12px">${esc(st.err)}</div>`;
-  h += `<div style="display:flex;flex-direction:column;gap:12px">${st.options.map((r, i) => { const its = Object.keys(r.uses).map(item).filter(Boolean); return `<button class="card rcard" style="text-align:left;width:100%;animation:pop .5s cubic-bezier(.34,1.56,.64,1) both;animation-delay:${i * 90}ms" data-act="openopt" data-i="${i}"><div class="thumb" style="background:${HERO_BG[r.hero] || '#FFF4DD'}">${icon(r.hero)}</div><div style="flex:1;min-width:0"><div class="ff" style="font-size:17px;line-height:1.15">${esc(r.name)}</div><div class="row" style="gap:6px;margin-top:6px;font-size:12px;color:var(--muted)">${SVG.clock}${r.time} min · ${esc(FLAV.find(f => f.id === r.flavour)?.label || 'Tasty')}</div><div class="row" style="gap:2px;margin-top:6px">${its.slice(0, 5).map(it => icon(iconOf(it), 'ic').replace('class="ic"', 'style="width:26px;height:26px"')).join('')}${its.length > 5 ? `<span class="sub">+${its.length - 5}</span>` : ''}</div></div><span class="round accent" style="width:44px;height:44px;display:grid;place-items:center">${SVG.arrow}</span></button>`; }).join('')}</div>`;
+  h += `<div style="display:flex;flex-direction:column;gap:12px">${st.options.map((r, i) => { const its = Object.keys(r.uses).map(item).filter(Boolean); const sv = st.recipes.some(x => x.id === r.id); return `<div class="card rcard optcard" style="animation:pop .5s cubic-bezier(.34,1.56,.64,1) both;animation-delay:${i * 90}ms"><button class="optmain" data-act="openopt" data-i="${i}" aria-label="Open ${esc(r.name)}"><div class="thumb" style="background:${HERO_BG[r.hero] || '#FFF4DD'}">${icon(r.hero)}</div><div style="flex:1;min-width:0"><div class="ff" style="font-size:17px;line-height:1.15">${esc(r.name)}</div><div class="row" style="gap:6px;margin-top:6px;font-size:12px;color:var(--muted)">${SVG.clock}${r.time} min · ${esc(FLAV.find(f => f.id === r.flavour)?.label || 'Tasty')}</div><div class="row" style="gap:2px;margin-top:6px">${its.slice(0, 5).map(it => icon(iconOf(it), 'ic').replace('class="ic"', 'style="width:26px;height:26px"')).join('')}${its.length > 5 ? `<span class="sub">+${its.length - 5}</span>` : ''}</div></div></button><div class="optside"><button class="round ${sv ? 'saved' : ''}" style="width:44px;height:44px" data-act="saveopt" data-i="${i}" aria-pressed="${sv}" aria-label="${sv ? 'Remove from Saved' : 'Save recipe'}">${SVG.save(sv)}</button><span class="sub">${sv ? 'Saved' : 'Save'}</span></div></div>`; }).join('')}</div>`;
   h += `<div style="height:90px"></div>`;
   h += `<div class="stack plain"><button class="cta ghost" data-act="more">${icon('dice', 'ic').replace('class="ic"', 'style="width:30px;height:30px"')}More ideas</button></div>`;
   return h;
+}
+// ───────────────────────── cooking moment ─────────────────────────
+let cookT = null;
+const REDUCED = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
+function startCooking() {
+  const r = st.recipe; if (!r) return;
+  const rows = Object.keys(r.uses).map(k => { const it = item(k); if (!it) return null; const used = Math.min(it.qty, r.uses[k]); return { id: k, name: it.name, icon: iconOf(it), cat: catOf(it.cat), unit: it.unit, before: it.qty, after: Math.max(0, Math.round((it.qty - used) * 10) / 10), base: Math.max(it.max || 0, it.qty) }; }).filter(Boolean);
+  rows.forEach(x => setQty(x.id, x.after));
+  const hid = 'c-' + Date.now();
+  const snap = { name: r.name, hero: r.hero, time: r.time, flavour: r.flavour, steps: r.steps || [], servings: st.servings,
+    ingredients: r.src === 'generated' || !r.ingredients ? Object.keys(r.uses).map(k => item(k)).filter(Boolean).map(it => ({ name: it.name, qty: r.uses[it.id], unit: it.unit, cat: catOf(it.cat) })) : r.ingredients };
+  st.history.unshift({ id: hid, at: Date.now(), name: r.name, hero: r.hero, recipe: snap, rows: rows.map(x => { const it = item(x.id) || {}; return { id: x.id, name: x.name, icon: x.icon, cat: x.cat, unit: x.unit, used: Math.round((x.before - x.after) * 10) / 10, shelf: it.shelf || 7, max: it.max || x.before }; }).filter(x => x.used > 0) });
+  st.history = st.history.slice(0, 60);
+  st.cookLog = { name: r.name, hero: r.hero, rows, hid };
+  st.selected = {}; st.flavour = null; st.options = null; st.recipeBack = null; st.filter = 'all'; st.mode = 'select';
+  persist('items');
+  const n = Math.min(6, rows.length);
+  clearTimeout(cookT);
+  swapScreen(() => { st.screen = 'cooking'; render(); cookT = setTimeout(showCooked, REDUCED() ? 600 : cookTimes(Math.max(1, n)).end * 1000); });
+}
+// Put a cooked meal's ingredients back. Works once per meal; items used up are restored too.
+function undoCook(hid) {
+  const h = st.history.find(x => x.id === hid); if (!h || h.undone) return false;
+  h.rows.forEach(x => {
+    let it = item(x.id);
+    if (!it) { it = { id: x.id, name: x.name, cat: x.cat, unit: x.unit, qty: 0, max: x.max, shelf: x.shelf, addedAt: Date.now(), icon: x.icon, ord: Date.now() }; st.items.push(it); }
+    it.qty = Math.round((it.qty + x.used) * 10) / 10; it.max = Math.max(it.max || 0, it.qty);
+  });
+  h.undone = true; h.undoneAt = Date.now();
+  persist('items'); toast(h.rows.length === 1 ? 'Put 1 ingredient back' : 'Put ' + h.rows.length + ' ingredients back');
+  return true;
+}
+const whenLabel = t => { const d = new Date(t), now = new Date(), day = 86400000, time = d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+  const start = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+  return t >= start ? 'Today, ' + time : t >= start - day ? 'Yesterday, ' + time : d.toLocaleDateString([], { weekday: 'short', day: 'numeric', month: 'short' }); };
+function historyHtml() {
+  if (!st.history.length) return `<div class="empty">${icon('rice')}<p>Meals you cook show up here. You can undo one if you change your mind.</p></div>`;
+  return `<div style="display:flex;flex-direction:column;gap:10px">${st.history.map((h, i) => `<div class="card hcard ${h.undone ? 'undone' : ''}" style="animation:rise .4s both;animation-delay:${Math.min(i, 8) * 40}ms">
+    <div class="row" style="gap:12px"><div class="thumb" style="background:${HERO_BG[h.hero] || '#FFF4DD'}">${icon(h.hero)}</div><div style="flex:1;min-width:0"><div class="ff" style="font-size:16px;line-height:1.1">${esc(h.name)}</div><div class="sub" style="margin-top:4px">${esc(whenLabel(h.at))}${h.undone ? ' · undone' : ''}</div></div>
+    ${h.undone ? '<span class="spill dim" style="height:36px">Undone</span>' : `<button class="small undo" data-act="undocook" data-id="${esc(h.id)}">${SVG.undo}Undo</button>`}</div>
+    <div class="row" style="gap:8px;margin-top:10px"><button class="small hbtn go" data-act="cookagain" data-id="${esc(h.id)}">${SVG.flame.replace('fill="#FF7A45"', 'fill="#2A1F1A"')}Cook again</button>${st.recipes.some(x => x.id === 'h-' + h.id) ? `<span class="small hbtn done">${SVG.check}Saved</span>` : `<button class="small hbtn" data-act="savecooked" data-id="${esc(h.id)}">${SVG.save(false)}Save recipe</button>`}</div>
+    <div class="pill-row" style="margin-top:10px;gap:6px">${h.rows.map(x => `<div class="mini">${icon(x.icon)}${esc(x.name)}<span class="tag" style="background:var(--tint-pink);color:var(--pink-ink)">−${esc(fmtQ(x.used, x.unit))}</span></div>`).join('')}</div></div>`).join('')}</div>`;
+}
+let swapping = false;
+function swapScreen(change) {
+  if (swapping) return;
+  if (REDUCED()) { change(); window.scrollTo(0, 0); return; }
+  swapping = true; app.classList.add('leaving');
+  setTimeout(() => { change(); window.scrollTo(0, 0); requestAnimationFrame(() => { app.classList.remove('leaving'); swapping = false; }); }, 300);
+}
+function showCooked() {
+  clearTimeout(cookT); if (!st.cookLog) return goHome(); if (st.screen !== 'cooking') return;
+  swapScreen(() => { st.screen = 'cooked'; render(); });
+}
+function goHome() {
+  clearTimeout(cookT); if (st.screen === 'fridge') return;
+  swapScreen(() => { st.cookLog = null; st.screen = 'fridge'; lastScreen = 'fridge'; render(); });
+}
+// Cooking timeline in seconds: pop onto the board, knife sweeps (0.42 s per item), each piece
+// flies into the wok (0.95 s, staggered), the wok tosses, then the summary.
+const FLY_DUR = 0.95;
+function cookTimes(n) {
+  const knife = 0.35 + n * 0.2 + 0.25, knifeDur = n * 0.42, fly = knife + knifeDur + 0.45, gap = 0.3;
+  const landed = fly + (n - 1) * gap + FLY_DUR;
+  return { inGap: 0.2, knife, knifeDur, fly, gap, toss: fly + 0.7, end: landed + 1.8 };
+}
+const fmtQ = (q, u) => (Number.isInteger(q) ? q : q.toFixed(1)) + ' ' + u;
+function viewCooking() {
+  const L = st.cookLog; const rows = L.rows.slice(0, 6); const n = Math.max(1, rows.length);
+  const t = cookTimes(n);
+  const toss = t.toss;
+  const ings = rows.map((x, i) => { const pos = 0.12 + 0.76 * (i + 0.5) / n; const svg = icon(x.icon, 'ic');
+    return `<div class="ing" style="--p:${pos.toFixed(3)};--fly:${(t.fly + i * t.gap).toFixed(2)}s"><div class="ing-in" style="--in:${(0.15 + i * t.inGap).toFixed(2)}s"><span class="half l" style="--cut:${(t.knife + (i + 0.5) * 0.42).toFixed(2)}s">${svg}</span><span class="half r" style="--cut:${(t.knife + (i + 0.5) * 0.42).toFixed(2)}s">${svg}</span></div></div>`; }).join('');
+  const bits = rows.concat(rows).slice(0, 8).map((x, i) => `<span class="bit" style="left:${18 + (i * 64 / 8) + (i % 2) * 4}%;background:${CATS[x.cat].color};--b:${(toss + (i % 4) * 0.15).toFixed(2)}s"></span>`).join('');
+  const flames = [0, 1, 2, 3, 4].map(i => `<svg class="flame" style="left:${22 + i * 14}%;--f:${(i * 0.13).toFixed(2)}s" viewBox="0 0 24 36" aria-hidden="true"><path d="M12 1c3 7 10 11 10 21a10 10 0 0 1-20 0C2 14 8 10 12 1z" fill="#FF7A45"/><path d="M12 13c2 4 5 6 5 11a5 5 0 0 1-10 0c0-4 3-6 5-11z" fill="#FFC53D"/></svg>`).join('');
+  return `<div class="head"><div class="hl"><h1>Cooking</h1></div><button class="small" style="height:40px;border-radius:20px;padding:0 16px;background:var(--surface);box-shadow:0 3px 0 var(--line);color:var(--ink)" data-act="cookskip">Skip</button></div>
+  <div class="sub" style="font-size:15px;white-space:normal">${esc(L.name)}</div>
+  <div class="cookscene" style="--knife:${t.knife}s;--kdur:${t.knifeDur.toFixed(2)}s;--toss:${toss.toFixed(2)}s" aria-hidden="true">
+    <div class="board"></div>${ings}
+    <div class="knife"><svg viewBox="0 0 40 64" width="40" height="64"><rect x="15" y="0" width="10" height="22" rx="4" fill="#8A5A3B" stroke="#2A1F1A" stroke-width="2.5"/><path d="M10 22h20v26c0 8-6 14-10 14S10 56 10 48z" fill="#E7EEF2" stroke="#2A1F1A" stroke-width="2.5" stroke-linejoin="round"/></svg></div>
+    <div class="wokwrap"><span class="steam" style="left:38%;top:-30px;animation-delay:var(--toss)"></span><span class="steam" style="left:52%;top:-40px;animation-delay:calc(var(--toss) + .4s)"></span><span class="steam" style="left:64%;top:-28px;animation-delay:calc(var(--toss) + .8s)"></span>${bits}
+      <svg class="wok" viewBox="0 0 260 96" aria-hidden="true"><path d="M206 28h46a6 6 0 0 1 0 12h-46z" fill="#8A5A3B" stroke="var(--ink)" stroke-width="3"/><path d="M14 26h192c0 38-42 62-96 62S14 64 14 26z" fill="#3A2E28" stroke="var(--ink)" stroke-width="3" stroke-linejoin="round"/><ellipse cx="110" cy="26" rx="96" ry="9" fill="#5A4A40" stroke="var(--ink)" stroke-width="3"/><ellipse class="food" cx="110" cy="27" rx="70" ry="6" fill="#FFB061"/></svg>
+    </div>
+    <div class="fire">${flames}</div>
+  </div>`;
+}
+function viewCooked() {
+  const L = st.cookLog;
+  const rows = L.rows.map((x, i) => { const from = Math.round(x.before / (x.base || 1) * 100), to = Math.round(x.after / (x.base || 1) * 100); const used = Math.round((x.before - x.after) * 10) / 10;
+    return `<div class="card userow" style="--i:${i};--from:${from}%;--to:${to}%;--c:${CATS[x.cat].color}"><div class="uicon" style="background:${CATS[x.cat].bg}">${icon(x.icon)}</div><div class="umid"><div class="row" style="gap:8px;justify-content:space-between"><span class="ff" style="font-size:16px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(x.name)}</span><span class="tag ${x.after <= 0 ? 'gone' : ''}">${x.after <= 0 ? 'Finished' : '−' + fmtQ(used, x.unit)}</span></div><div class="ubar"><span></span></div><div class="sub">${fmtQ(x.before, x.unit)} → ${fmtQ(x.after, x.unit)} left</div></div></div>`; }).join('');
+  return `<div class="cookedhead"><div class="plate" style="background:${HERO_BG[L.hero] || '#FFF4DD'}">${icon(L.hero)}</div><div><h1>Cooked!</h1><div class="sub" style="font-size:15px;white-space:normal;margin-top:4px">${esc(L.name)} · here's what it used</div></div></div>
+  <div style="display:flex;flex-direction:column;gap:10px;margin-top:16px">${rows}</div>
+  <div style="height:90px"></div>
+  <div class="stack plain" style="flex-direction:row"><div style="display:flex;gap:10px;width:100%;max-width:448px;margin:0 auto"><button class="cta ghost" style="width:auto;padding:0 22px" data-act="undolast">${SVG.undo}Undo</button><button class="cta prime homebtn" style="flex:1" data-act="cookdone">${SVG.fridge}Back to fridge</button></div></div>`;
 }
 function viewGen() {
   return `<div class="gen"><div class="pot"><span class="steam" style="left:50px;top:10px"></span><span class="steam" style="left:76px;top:2px;animation-delay:.5s"></span><span class="steam" style="left:100px;top:12px;animation-delay:1s"></span>
@@ -789,13 +1063,14 @@ function viewRecipe() {
   const r = st.recipe; if (!r) { st.screen = 'fridge'; return viewFridge(); }
   const uses = Object.keys(r.uses || {}).map(id => { const it = item(id); const need = r.uses[id]; return { it, need, short: !it || it.qty < need }; }).filter(u => u.it);
   const saved = st.recipes.some(x => x.id === r.id);
-  let h = `<div class="head"><button class="round" data-act="go" data-to="${st.recipeBack || (r.src === 'generated' ? 'options' : 'recipes')}" aria-label="Back">${SVG.back}</button><div class="row" style="gap:8px"><button class="round" data-act="saverecipe" aria-label="${saved ? 'Remove from recipes' : 'Save recipe'}">${SVG.save(saved)}</button></div></div>`;
+  let h = `<div class="head"><button class="round" data-act="go" data-to="${st.recipeBack || (r.src === 'generated' ? 'options' : 'recipes')}" aria-label="Back">${SVG.back}</button></div>`;
   h += `<div class="hero" style="background:${HERO_BG[r.hero] || '#FFF4DD'}">${icon(r.hero)}</div>`;
   h += `<h1 style="margin-top:16px;font-size:28px">${esc(r.name)}</h1>`;
   const nut = ['protein', 'carbs', 'fibre'].map(k => { const ok = !!(r.nutrients && r.nutrients[k]) || uses.some(u => catOf(u.it.cat) === k); return `<span class="spill ${ok ? '' : 'dim'}" ${ok ? `style="background:${CATS[k].bg};color:#2A1F1A;box-shadow:none"` : ''}><span class="dot" style="width:8px;height:8px;border-radius:50%;background:${ok ? CATS[k].color : '#D9CFC4'};display:block"></span>${CATS[k].label}</span>`; }).join('');
   h += `<div class="pill-row" style="margin-top:10px"><span class="spill">${SVG.clock}${r.time} min</span><span class="spill">${SVG.person('#FFC53D').replace('width="22" height="26"', 'width="16" height="18"')}${r.servings || st.servings} ${(r.servings || st.servings) === 1 ? 'person' : 'people'}</span><span class="spill">${SVG.flame}${esc(FLAV.find(f => f.id === r.flavour)?.label || 'Tasty')}</span>${nut}</div>`;
   if (uses.length) h += `<div style="margin-top:20px"><span class="ff" style="font-size:16px;color:var(--muted)">Uses from your fridge</span><div class="hrow" style="margin-top:10px">${uses.map(u => `<div class="mini" style="flex-direction:column;width:86px;padding:10px 6px 8px;border-radius:20px;text-align:center">${icon(iconOf(u.it), 'ic').replace('class="ic"', 'class="ic" style="width:48px;height:48px"')}<span style="font-size:12px">${esc(u.it.name)}</span><span class="tag" style="background:${u.short ? '#FF6A8E' : 'var(--tint-pink)'};color:${u.short ? '#FFF6E9' : 'var(--pink-ink)'};font-weight:800">${u.short ? 'have ' + u.it.qty + ' / ' + u.need : '−' + u.need + ' ' + u.it.unit}</span></div>`).join('')}</div></div>`;
-  else if (r.ingredients) h += `<div style="margin-top:20px"><span class="ff" style="font-size:16px;color:var(--muted)">Ingredients</span><div class="pill-row" style="margin-top:10px">${r.ingredients.map(g => { const m = matchIngredient(g.name); return `<span class="spill ${m ? '' : 'dim'}">${g.qty} ${esc(g.unit)} ${esc(g.name)}${m ? '' : ' · not in fridge'}</span>`; }).join('')}</div></div>`;
+  if (r.ingredients && r.src !== 'generated') h += `<div style="margin-top:20px"><span class="ff" style="font-size:16px;color:var(--muted)">Recipe calls for</span><div class="pill-row" style="margin-top:10px">${r.ingredients.map(g => { const m = matchIngredient(g.name); return `<span class="spill ${m ? '' : 'dim'}">${g.qty} ${esc(g.unit)} ${esc(g.name)}${m ? '' : ' · not in fridge'}</span>`; }).join('')}</div></div>`;
+  h += checkHtml(r);
   const shortOnes = uses.filter(u => u.short);
   if (shortOnes.length) {
     const subs = [];
@@ -803,18 +1078,21 @@ function viewRecipe() {
     h += `<div class="card warm" style="margin-top:14px"><div class="row" style="font-size:13px;color:#7A5A20;margin-bottom:8px">${SVG.swap}Running short — top up with</div><div class="hrow">${subs.length ? subs.map(s => `<button class="mini" data-act="swap" data-from="${s.from.id}" data-to="${s.x.id}">${icon(iconOf(s.x))}${esc(s.x.name)}<span class="sub">for ${esc(s.from.name)}</span></button>`).join('') : '<span style="font-size:13px;color:#7A5A20;padding:8px 4px">Nothing in the fridge covers it — shop, or cook for fewer people.</span>'}</div></div>`;
   }
   if (r.steps && r.steps.length) h += `<div style="margin-top:20px"><span class="ff" style="font-size:16px;color:var(--muted)">Steps</span><div class="steps" style="margin-top:10px">${r.steps.map((s, i) => `<div class="stepc"><span class="n" style="background:${['#FFE4D2', '#D7F5EC', '#FFF0D4'][i % 3]}">${i + 1}</span><span>${esc(s)}</span></div>`).join('')}</div></div>`;
-  h += `<div class="stack plain" style="flex-direction:row;gap:10px"><div style="display:flex;gap:10px;width:100%;max-width:448px;margin:0 auto"><button class="cta prime" style="flex:1" data-act="accept">${SVG.check}Cook this</button></div></div>`;
+  h += `<div class="stack plain" style="flex-direction:row;gap:10px"><div style="display:flex;gap:10px;width:100%;max-width:448px;margin:0 auto"><button class="cta ghost savebtn ${saved ? 'on' : ''}" style="width:auto;padding:0 20px" data-act="saverecipe" aria-pressed="${saved}">${SVG.save(saved)}${saved ? 'Saved' : 'Save'}</button><button class="cta prime" style="flex:1" data-act="accept">${SVG.check}Cook this</button></div></div>`;
   return h;
 }
 function viewRecipes() {
-  const tabs = [['mine', 'Mine'], ['saved', 'Saved'], ['insta', 'Insta']];
+  const tabs = [['mine', 'Mine'], ['saved', 'Saved'], ['insta', 'Insta'], ['cooked', 'Cooked']];
   let h = `<div class="head"><div class="hl"><h1>Recipes</h1></div><button class="round accent" data-act="importsheet" aria-label="Add a recipe">${SVG.plus}</button></div>`;
   h += `<div class="row" style="gap:8px;margin-bottom:12px">${tabs.map(([id, l]) => `<button class="timec ${st.rtab === id ? 'on' : ''}" style="height:40px;border-radius:20px;font-size:15px" data-act="rtab" data-id="${id}">${l}</button>`).join('')}</div>`;
-  const list = st.recipes.filter(r => (st.rtab === 'saved' ? r.src !== 'insta' && r.src !== 'mine' : r.src === st.rtab));
+  const tabOf = r => r.src === 'mine' && /^[gha]-/.test(r.id) ? 'saved' : r.src === 'insta' || r.src === 'mine' ? r.src : 'saved';
+  const list = st.rtab === 'cooked' ? [] : st.recipes.filter(r => tabOf(r) === st.rtab);
   if (st.rtab === 'insta') h += `<div class="card dark row" style="margin-bottom:10px"><div style="flex:1"><div class="ff" style="font-size:17px">Instagram saves</div><div class="sub" style="color:inherit;opacity:.7">Share a reel to your notes, paste the caption here. Direct import isn't possible from Instagram.</div></div><button class="small" style="background:var(--accent)" data-act="importsheet">Paste</button></div>`;
-  if (!list.length) h += `<div class="empty">${icon('rice')}<p>${st.rtab === 'mine' ? 'Recipes you generate and save land here.' : st.rtab === 'insta' ? 'Nothing from Instagram yet.' : 'Paste a recipe, a link, or a caption and I\'ll file it.'}</p></div>`;
+  if (st.rtab === 'cooked') h += historyHtml();
+  else if (!list.length) h += `<div class="empty">${icon('rice')}<p>${st.rtab === 'mine' ? 'Recipes you add yourself land here. Tap + to paste or write one.' : st.rtab === 'insta' ? 'Nothing from Instagram yet.' : 'Paste a recipe, a link, or a caption and I\'ll file it.'}</p></div>`;
   h += `<div style="display:flex;flex-direction:column;gap:10px">${list.map((r, i) => { const pct = r.ingredients ? matchPct(r) : 100; return `<div class="card rcard" style="animation:rise .4s both;animation-delay:${i * 40}ms"><div class="thumb" style="background:${HERO_BG[r.hero] || '#FFF4DD'}">${icon(r.hero)}</div><div style="flex:1;min-width:0"><div class="ff" style="font-size:16px;line-height:1.1">${esc(r.name)}</div><div class="row" style="gap:6px;margin-top:6px;font-size:12px;color:var(--muted)">${SVG.clock}${r.time} min</div></div>${ringHtml(pct)}<button class="round accent" style="width:44px;height:44px" data-act="openrecipe" data-id="${r.id}" aria-label="Open ${esc(r.name)}">${SVG.arrow}</button></div>`; }).join('')}</div>`;
   h += `<div style="display:flex;justify-content:center;margin-top:24px"><button class="spill" data-act="settings">${syncLabel()} · Settings</button></div>`;
+  if (st.items.some(i => i.qty > 0)) h += `<div style="height:80px"></div><div class="stack"><button class="cta ink" data-act="surprise">${icon('dice', 'ic').replace('class="ic"', 'style="width:30px;height:30px"')}Surprise me${SVG.arrow}</button></div>`;
   return h + nav('recipes');
 }
 function nav(on) { return `<nav class="bar" aria-label="Main"><button class="${on === 'fridge' ? 'on' : ''}" data-act="go" data-to="fridge">${SVG.fridge}Fridge</button><button class="${on === 'recipes' ? 'on' : ''}" data-act="go" data-to="recipes">${SVG.book}Recipes</button></nav>`; }
@@ -872,22 +1150,63 @@ function sheetHtml() {
 // ───────────────────────── render ─────────────────────────
 const app = document.getElementById('app'), overlay = document.getElementById('overlay');
 function toastHtml() { return st.toast ? `<div class="toast" role="status"><svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="11" fill="#2FBF9B"/><path d="M7 12.5l3.5 3.5L17 9" stroke="#1E1714" stroke-width="2.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>${esc(st.toast)}</div>` : ''; }
-function viewFor() { return { fridge: viewFridge, craving: viewCraving, options: viewOptions, gen: viewGen, recipe: viewRecipe, recipes: viewRecipes }[st.screen] || viewFridge; }
+function viewFor() { return { fridge: viewFridge, craving: viewCraving, options: viewOptions, cooking: viewCooking, cooked: viewCooked, gen: viewGen, recipe: viewRecipe, recipes: viewRecipes }[st.screen] || viewFridge; }
+let lastScreen = null;
 function render() {
+  app.classList.toggle('calm', st.screen === lastScreen); lastScreen = st.screen;
   app.innerHTML = (DEMO ? demoBar() : '') + viewFor()();
+  syncPad();
   overlay.innerHTML = sheetHtml() + toastHtml();
+}
+
+const CHK_SVG = '<svg class="chk" width="28" height="28" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="11" fill="#FF7A45" stroke="#FFF6E9" stroke-width="2"/><path d="M7 12.5l3.5 3.5L17 9" stroke="#2A1F1A" stroke-width="2.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+// The fridge grid scrolls under the fixed bottom stack, so leave room for however tall it is.
+function syncPad() { const el = st.screen === 'fridge' && app.querySelector('.stack'); app.style.paddingBottom = el ? (el.offsetHeight + 12) + 'px' : ''; }
+// Picking a tile changes only that tile and the bottom stack, so the grid stays still.
+function patchPick(id) {
+  if (st.screen !== 'fridge') { render(); return; }
+  const on = !!st.selected[id];
+  const t = app.querySelector(`.tile[data-act="pick"][data-id="${CSS.escape(id)}"]`);
+  if (t) {
+    t.classList.toggle('sel', on); t.setAttribute('aria-pressed', String(on));
+    const c = t.querySelector('.chk'); if (c) c.remove();
+    if (on) t.insertAdjacentHTML('afterbegin', CHK_SVG);
+  }
+  const html = fridgeStack(); let el = app.querySelector('.stack');
+  if (!html) { if (el) el.remove(); syncPad(); return; }
+  if (!el) { app.querySelector('nav.bar').insertAdjacentHTML('beforebegin', '<div class="stack"></div>'); el = app.querySelector('.stack'); }
+  el.innerHTML = html; syncPad();
+}
+
+// Save a recipe to the Saved tab, or remove it if it is already there. AI ideas keep their ingredients and steps.
+function toggleSave(r) {
+  if (!r) return;
+  const i = st.recipes.findIndex(x => x.id === r.id);
+  if (i >= 0) { st.recipes.splice(i, 1); toast('Removed from Saved'); }
+  else {
+    const ingredients = r.src !== 'generated' && r.ingredients ? r.ingredients : Object.keys(r.uses || {}).map(item).filter(Boolean).map(it => ({ name: it.name, qty: r.uses[it.id], unit: it.unit, cat: catOf(it.cat) }));
+    const copy = Object.assign({}, r, { src: 'saved', savedAt: Date.now(), ingredients }); delete copy.uses;
+    st.recipes.unshift(copy); toast('Saved');
+  }
+  persist('recipes');
 }
 
 // ───────────────────────── events ─────────────────────────
 let lp = null, held = false;
 function setQty(id, q) { const it = item(id); if (!it) return; it.qty = Math.max(0, Math.round(q * 10) / 10); if (it.qty === 0) delete st.selected[id]; persist('items'); }
+// Hold a tile to edit amounts. A hold only counts if the finger stays put: any movement past
+// ~10px or any scroll cancels it, so dragging through the grid never opens edit mode.
+let lpX = 0, lpY = 0;
+const cancelHold = () => { clearTimeout(lp); lp = null; };
 document.addEventListener('pointerdown', e => {
-  const t = e.target.closest('[data-act="pick"].tile'); if (!t) return;
-  clearTimeout(lp); held = false;
-  lp = setTimeout(() => { held = true; st.mode = 'edit'; render(); }, 450);
+  const t = e.target.closest('[data-act="pick"].tile'); if (!t || e.button > 0) return;
+  cancelHold(); held = false; lpX = e.clientX; lpY = e.clientY;
+  lp = setTimeout(() => { lp = null; held = true; st.mode = 'edit'; render(); }, 500);
 });
-['pointerup', 'pointercancel'].forEach(ev => document.addEventListener(ev, () => clearTimeout(lp)));
-document.addEventListener('pointermove', e => { if (lp && e.buttons === 0) clearTimeout(lp); });
+document.addEventListener('pointermove', e => { if (lp && Math.hypot(e.clientX - lpX, e.clientY - lpY) > 10) cancelHold(); }, { passive: true });
+document.addEventListener('touchmove', e => { const p = e.touches[0]; if (lp && p && Math.hypot(p.clientX - lpX, p.clientY - lpY) > 10) cancelHold(); }, { passive: true });
+['pointerup', 'pointercancel', 'touchend', 'touchcancel'].forEach(ev => document.addEventListener(ev, cancelHold, { passive: true }));
+window.addEventListener('scroll', cancelHold, { passive: true, capture: true });
 document.addEventListener('contextmenu', e => { if (e.target.closest('.tile')) e.preventDefault(); });
 document.addEventListener('click', async e => {
   const el = e.target.closest('[data-act]'); if (!el) return;
@@ -895,7 +1214,7 @@ document.addEventListener('click', async e => {
   const act = el.dataset.act, id = el.dataset.id;
   switch (act) {
     case 'filter': st.filter = id; break;
-    case 'pick': if (held) { held = false; return; } st.selected[id] = !st.selected[id]; break;
+    case 'pick': if (held) { held = false; return; } st.selected[id] = !st.selected[id]; patchPick(id); return;
     case 'inc': { const it = item(id); if (it.qty === 0) it.addedAt = Date.now(); setQty(id, it.qty + stepOf(it)); it.max = Math.max(it.max || 0, it.qty); break; }
     case 'dec': { const it = item(id); setQty(id, it.qty - stepOf(it)); break; }
     case 'restock': { const it = item(id); it.qty = it.max || stepOf(it); it.addedAt = Date.now(); it.exp = null; persist('items'); toast(it.name + ' restocked'); break; }
@@ -903,7 +1222,8 @@ document.addEventListener('click', async e => {
     case 'done': st.mode = 'select'; break;
     case 'picksoon': soonList().forEach(i => { st.selected[i.id] = true; }); st.filter = 'all'; break;
     case 'go': st.screen = el.dataset.to; st.err = null; break;
-    case 'craving': st.screen = 'craving'; st.err = null; break;
+    case 'craving': st.cravingBack = 'fridge'; st.screen = 'craving'; st.err = null; break;
+    case 'surprise': st.selected = {}; st.cravingBack = 'recipes'; st.screen = 'craving'; st.err = null; break;
     case 'flav': st.flavour = st.flavour === id ? null : id; break;
     case 'people': st.servings = Math.min(6, Math.max(1, st.servings + Number(el.dataset.d))); persist('prefs'); break;
     case 'time': st.time = Number(el.dataset.t); break;
@@ -911,10 +1231,18 @@ document.addEventListener('click', async e => {
     case 'more': generate(st.shown); return;
     case 'openopt': { const r = st.options && st.options[Number(el.dataset.i)]; if (!r) break; st.recipe = r; st.recipeBack = 'options'; st.screen = 'recipe'; break; }
     case 'swap': { const r = st.recipe; const from = item(el.dataset.from), to = item(el.dataset.to); const amt = Math.max(stepOf(to), Math.round((r.uses[from.id] / (from.max || r.uses[from.id])) * (to.max || to.qty) / stepOf(to)) * stepOf(to)); delete r.uses[from.id]; r.uses[to.id] = Math.min(to.qty, amt); toast(from.name + ' → ' + to.name); break; }
-    case 'saverecipe': { const r = st.recipe; const i = st.recipes.findIndex(x => x.id === r.id); if (i >= 0) { st.recipes.splice(i, 1); toast('Removed'); } else { st.recipes.unshift(Object.assign({}, r, { src: 'mine', savedAt: Date.now(), ingredients: Object.keys(r.uses).map(k => ({ name: item(k).name, qty: r.uses[k], unit: item(k).unit, cat: item(k).cat })) })); toast('Saved to Recipes'); } persist('recipes'); break; }
-    case 'accept': { const r = st.recipe; Object.keys(r.uses).forEach(k => { const it = item(k); if (it) setQty(k, it.qty - r.uses[k]); }); st.selected = {}; st.flavour = null; st.options = null; st.recipeBack = null; st.screen = 'fridge'; st.filter = 'all'; persist('items'); toast('Fridge updated'); break; }
+    case 'saverecipe': toggleSave(st.recipe); break;
+    case 'saveopt': { const r = st.options && st.options[Number(el.dataset.i)]; if (r) toggleSave(r); break; }
+    case 'accept': startCooking(); return;
+    case 'cookskip': if (st.screen === 'cooking') showCooked(); return;
+    case 'cookdone': goHome(); return;
+    case 'undolast': { const hid = st.cookLog && st.cookLog.hid; clearTimeout(cookT); undoCook(hid); goHome(); return; }
+    case 'undocook': undoCook(id); break;
+    case 'cookagain': { const h = st.history.find(x => x.id === id); if (!h) break; const rec = histRecipe(h); st.recipe = Object.assign({}, rec, { id: 'h-' + h.id, src: 'history', uses: usesFromSaved(rec), servings: st.servings }); st.recipeBack = 'recipes'; st.err = null; st.screen = 'recipe'; window.scrollTo(0, 0); break; }
+    case 'savecooked': { const h = st.history.find(x => x.id === id); if (!h || st.recipes.some(x => x.id === 'h-' + h.id)) break; st.recipes.unshift(Object.assign({}, histRecipe(h), { id: 'h-' + h.id, src: 'saved', savedAt: Date.now() })); persist('recipes'); toast('Saved'); break; }
+    case 'adapt': adaptRecipe(); return;
     case 'rtab': st.rtab = id; break;
-    case 'openrecipe': { const r = st.recipes.find(x => x.id === id); if (!r) break; st.recipe = Object.assign({}, r, { uses: usesFromSaved(r), servings: st.servings }); st.recipeBack = el.dataset.from || 'recipes'; st.screen = 'recipe'; break; }
+    case 'openrecipe': { const r = st.recipes.find(x => x.id === id); if (!r) break; st.recipe = Object.assign({}, r, { uses: usesFromSaved(r), servings: st.servings }); st.recipeBack = el.dataset.from || 'recipes'; st.err = null; st.screen = 'recipe'; break; }
     case 'scan': st.sheet = 'scan'; st.scan = { files: [], preview: null, detected: null }; st.err = null; break;
     case 'runscan': scanPhotos(); return;
     case 'runtext': { const t = document.getElementById('scan-text'); st.scan.text = t ? t.value : ''; scanText(st.scan.text); return; }
@@ -948,6 +1276,15 @@ function readAddForm() {
   if (!g('a-name')) return;
   const prev = st.add || {}; st.add = Object.assign(prev, { touchedCat: prev.touchedCat || g('a-cat').value !== (prev.cat || 'fibre'), touchedShelf: prev.touchedShelf || String(g('a-shelf').value) !== String(prev.shelf || 7), name: g('a-name').value, qty: g('a-qty').value, unit: g('a-unit').value, cat: g('a-cat').value, shelf: g('a-shelf').value, exp: g('a-exp').value });
 }
+document.addEventListener('input', e => {
+  const t = e.target; if (t.id !== 'hunger') return;
+  st.hunger = Math.min(5, Math.max(1, Number(t.value) || 3));
+  const card = t.closest('.hunger'); if (!card) return;
+  card.style.setProperty('--pct', (st.hunger - 1) * 25 + '%');
+  card.querySelector('.bowl').style.setProperty('--s', st.hunger / 5);
+  card.querySelector('.hlabel').textContent = HUNGER[st.hunger].label;
+  t.setAttribute('aria-valuetext', HUNGER[st.hunger].label);
+});
 document.addEventListener('change', e => {
   const t = e.target;
   if (t.id === 'photo') {
@@ -965,10 +1302,29 @@ document.addEventListener('change', e => {
 document.addEventListener('keydown', e => { if (e.key === 'Escape' && st.sheet) { st.sheet = null; render(); } });
 
 // ───────────────────────── boot ─────────────────────────
-loadLocal();
-if (DEMO && lsGet(LS) == null) seedDemo();
-if (IN_CLAUDE && lsGet(LS) == null) st.loaded = false;
-render(); connectAi(); connectDb();
+// When a new version is published, the Claude viewer reloads open pages. Hand it the current
+// screen so the page comes back where it was (a cooking scene comes back as its summary).
+function hotState() {
+  return { screen: st.screen, recipe: st.recipe, options: st.options, cookLog: st.cookLog, selected: st.selected, flavour: st.flavour, time: st.time, hunger: st.hunger,
+    rtab: st.rtab, recipeBack: st.recipeBack, cravingBack: st.cravingBack, filter: st.filter, shown: st.shown, y: window.scrollY };
+}
+function start(data) {
+  loadLocal();
+  if (DEMO && lsGet(LS) == null) seedDemo();
+  if (IN_CLAUDE && lsGet(LS) == null) st.loaded = false;
+  if (data && data.screen) {
+    ['screen', 'recipe', 'options', 'cookLog', 'selected', 'flavour', 'time', 'hunger', 'rtab', 'recipeBack', 'cravingBack', 'filter', 'shown'].forEach(k => { if (data[k] !== undefined) st[k] = data[k]; });
+    if (st.screen === 'cooking' || st.screen === 'cooked') st.screen = st.cookLog ? 'cooked' : 'fridge';
+    if (st.screen === 'gen') st.screen = 'craving';
+    if ((st.screen === 'recipe' && !st.recipe) || (st.screen === 'options' && !(st.options && st.options.length))) st.screen = 'fridge';
+    lastScreen = st.screen;
+  }
+  render(); if (data && data.y) window.scrollTo(0, data.y);
+  connectAi(); connectDb();
+}
+const HOT = window.claude && window.claude.hot;
+try { if (HOT && HOT.snapshot) HOT.snapshot(hotState); } catch (e) {}
+if (HOT && HOT.ready) HOT.ready(start); else start((HOT && HOT.data) || {});
 if (!IN_CLAUDE && 'serviceWorker' in navigator) window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
 })();
 </script>
