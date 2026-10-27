@@ -196,6 +196,10 @@ nav.bar button.on{background:var(--tint-orange)}
 .ubar span{display:block;height:100%;border-radius:5px;background:var(--c);animation:shrink 1s cubic-bezier(.3,.7,.3,1) both;animation-delay:calc(.45s + var(--i) * 90ms)}
 @keyframes shrink{from{width:var(--from)}to{width:var(--to)}}
 .homebtn{position:relative;overflow:hidden}
+.hcard{padding:12px;display:flex;flex-direction:column}
+.hcard .thumb{width:52px;height:52px;border-radius:16px;display:grid;place-items:center;flex-shrink:0}.hcard .thumb .ic{width:40px;height:40px}
+.hcard.undone{opacity:.6}
+.small.undo{height:38px;border-radius:19px;padding:0 14px;font-size:14px;background:var(--surface);color:var(--ink);box-shadow:0 3px 0 var(--line);outline:2px solid var(--line);outline-offset:-2px;display:flex;align-items:center;gap:6px;flex-shrink:0}
 .homebtn .prog{position:absolute;left:0;bottom:0;height:4px;background:var(--accent-deep);animation:prog 6.5s linear both}
 @keyframes prog{from{width:0}to{width:100%}}
 @media (prefers-reduced-motion: reduce){*{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
@@ -276,6 +280,7 @@ const SVG = {
   minus: '<svg width="14" height="14" viewBox="0 0 24 24" stroke="#2A1F1A" stroke-width="3.5" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14"/></svg>',
   plusS: '<svg width="14" height="14" viewBox="0 0 24 24" stroke="#2A1F1A" stroke-width="3.5" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14M12 5v14"/></svg>',
   check: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 8"/></svg>',
+  undo: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 14L4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg>',
   arrow: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>',
   back: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M11 18l-6-6 6-6"/></svg>',
   x: '<svg width="20" height="20" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>',
@@ -293,7 +298,7 @@ const SVG = {
 // ───────────────────────── state ─────────────────────────
 const DAY = 86400000;
 const st = {
-  items: [], recipes: [], servings: 2, loaded: false,
+  items: [], recipes: [], history: [], servings: 2, loaded: false,
   screen: 'fridge', mode: 'select', filter: 'all', selected: {}, flavour: null, time: 20,
   recipe: null, options: null, recipeBack: null, shown: [], rtab: 'saved', toast: null, sheet: null, busy: null, err: null,
   scan: { files: [], preview: null, detected: null }, ai: null, canImage: false, db: null, synced: false
@@ -323,8 +328,8 @@ const lsSet = (k, v) => { try { v == null ? localStorage.removeItem(k) : localSt
 const passcode = () => lsGet(KEY) || '';
 const remoteOn = () => !DEMO && !IN_CLAUDE && !!(CFG.workerUrl && passcode());
 let localUpdatedAt = 0;
-function cacheLocal() { lsSet(LS, JSON.stringify({ items: st.items, recipes: st.recipes, servings: st.servings, updatedAt: localUpdatedAt })); }
-function loadLocal() { try { const j = JSON.parse(lsGet(LS) || 'null'); if (j) { st.items = j.items || []; st.recipes = j.recipes || []; st.servings = j.servings || 2; localUpdatedAt = j.updatedAt || 0; } } catch (e) {} st.loaded = true; }
+function cacheLocal() { lsSet(LS, JSON.stringify({ items: st.items, recipes: st.recipes, history: st.history, servings: st.servings, updatedAt: localUpdatedAt })); }
+function loadLocal() { try { const j = JSON.parse(lsGet(LS) || 'null'); if (j) { st.items = j.items || []; st.recipes = j.recipes || []; st.history = j.history || []; st.servings = j.servings || 2; localUpdatedAt = j.updatedAt || 0; } } catch (e) {} st.loaded = true; }
 function api(path, opts = {}) {
   return fetch(CFG.workerUrl.replace(/\/+$/, '') + path, Object.assign({}, opts, { headers: { 'content-type': 'application/json', 'x-fridge-key': passcode() }, credentials: 'omit', referrerPolicy: 'no-referrer' }));
 }
@@ -336,7 +341,7 @@ function persist() {
   clearTimeout(saveT);
   saveT = setTimeout(async () => {
     try {
-      const r = await api('/data', { method: 'PUT', body: JSON.stringify({ items: st.items, recipes: st.recipes, servings: st.servings, updatedAt: localUpdatedAt }) });
+      const r = await api('/data', { method: 'PUT', body: JSON.stringify({ items: st.items, recipes: st.recipes, history: st.history, servings: st.servings, updatedAt: localUpdatedAt }) });
       if (r.status === 401) toast('Passcode rejected. Check Settings.');
       else if (!r.ok) toast('Saved on this phone. Sync failed.');
     } catch (e) { toast('Offline. Saved on this phone.'); }
@@ -351,7 +356,7 @@ async function pull() {
     const d = await r.json();
     st.syncState = 'ok';
     if (d && Array.isArray(d.items) && (d.updatedAt || 0) > localUpdatedAt) {
-      st.items = d.items; st.recipes = d.recipes || []; st.servings = d.servings || st.servings; localUpdatedAt = d.updatedAt; cacheLocal();
+      st.items = d.items; st.recipes = d.recipes || []; st.history = d.history || []; st.servings = d.servings || st.servings; localUpdatedAt = d.updatedAt; cacheLocal();
     } else if ((d.updatedAt || 0) < localUpdatedAt) persist();
     render();
   } catch (e) {}
@@ -529,7 +534,7 @@ function seedDemo() {
       ingredients: [ing('Eggs', 4, 'pcs', 'protein'), ing('Cherry tomatoes', 10, 'pcs', 'fibre'), ing('Onion', 1, 'pcs', 'fibre'), ing('Chili', 1, 'pcs', 'seasoning'), ing('Garlic', 2, 'cloves', 'seasoning')],
       steps: ['Soften onion, garlic and chili', 'Add the tomatoes and simmer 10 min', 'Make wells and crack in the eggs', 'Cover until the whites set'] }
   ];
-  st.servings = 2; persist('items');
+  st.history = []; st.servings = 2; persist('items');
 }
 
 // ───────────────────────── Claude artifact runtime ─────────────────────────
@@ -560,7 +565,9 @@ async function connectClaude() {
   render();
 }
 let cdb = null, prefsSynced = null, syncing = false, syncAgain = false;
-const synced = { items: new Map(), recipes: new Map() }, dbReady = { items: false, recipes: false };
+const synced = { items: new Map(), recipes: new Map(), history: new Map() }, dbReady = { items: false, recipes: false, history: false };
+const colList = col => col === 'items' ? st.items : col === 'recipes' ? st.recipes : st.history;
+const dbAllReady = () => dbReady.items && dbReady.recipes && dbReady.history;
 function softRender() { if (st.screen === 'cooking' || st.screen === 'cooked') return; if (st.sheet) { app.classList.add('calm'); app.innerHTML = (DEMO ? demoBar() : '') + viewFor()(); } else render(); }
 async function connectClaudeDb() {
   cdb = await window.claude.use('db').catch(() => null);
@@ -568,26 +575,27 @@ async function connectClaudeDb() {
   window.claude.use('user').then(u => u && u.can('data.write')).then(ok => { if (ok === false) { st.readOnly = true; render(); } }).catch(() => {});
   const listen = (col, apply) => cdb.collection(col).onSnapshot(snap => {
     const list = snap.docs.map(d => Object.assign({}, d.data()));
-    const before = JSON.stringify(col === 'items' ? st.items : st.recipes);
+    const before = JSON.stringify(colList(col));
     apply(list);
-    const same = before === JSON.stringify(col === 'items' ? st.items : st.recipes);
+    const same = before === JSON.stringify(colList(col));
     synced[col] = new Map(list.map(x => [x.id, JSON.stringify(x)]));
     if (!snap.metadata.fromCache) dbReady[col] = true;
-    if (dbReady.items && dbReady.recipes) { st.loaded = true; st.dbState = 'live'; }
+    if (dbAllReady()) { st.loaded = true; st.dbState = 'live'; }
     cacheLocal(); if (!same || !st.loaded) softRender(); else if (st.loaded && !app.querySelector('.tile, .empty h2')) softRender();
   }, () => { st.dbState = 'off'; st.loaded = true; render(); });
   listen('items', list => { st.items = list.sort((a, b) => ((a.ord || 0) - (b.ord || 0)) || String(a.id).localeCompare(b.id)); Object.keys(st.selected).forEach(k => { if (!item(k)) delete st.selected[k]; }); });
   listen('recipes', list => { st.recipes = list.sort((a, b) => (b.savedAt || 0) - (a.savedAt || 0)); });
+  listen('history', list => { st.history = list.sort((a, b) => (b.at || 0) - (a.at || 0)); });
   cdb.doc('prefs/household').onSnapshot(s => { if (s.exists) { const v = Number(s.data().servings); if (v >= 1 && v <= 6) { prefsSynced = v; if (v !== st.servings) { st.servings = v; softRender(); } } } }, () => {});
 }
 async function syncDb() {
-  if (!cdb || st.readOnly || !dbReady.items || !dbReady.recipes) return;
+  if (!cdb || st.readOnly || !dbAllReady()) return;
   if (syncing) { syncAgain = true; return; }
   syncing = true;
   try {
     do {
       syncAgain = false;
-      for (const [col, list] of [['items', st.items], ['recipes', st.recipes]]) {
+      for (const [col, list] of [['items', st.items], ['recipes', st.recipes], ['history', st.history]]) {
         const m = synced[col], seen = new Set();
         for (const x of list) {
           seen.add(x.id); const j = JSON.stringify(x);
@@ -830,12 +838,37 @@ function startCooking() {
   const r = st.recipe; if (!r) return;
   const rows = Object.keys(r.uses).map(k => { const it = item(k); if (!it) return null; const used = Math.min(it.qty, r.uses[k]); return { id: k, name: it.name, icon: iconOf(it), cat: catOf(it.cat), unit: it.unit, before: it.qty, after: Math.max(0, Math.round((it.qty - used) * 10) / 10), base: Math.max(it.max || 0, it.qty) }; }).filter(Boolean);
   rows.forEach(x => setQty(x.id, x.after));
-  st.cookLog = { name: r.name, hero: r.hero, rows };
+  const hid = 'c-' + Date.now();
+  st.history.unshift({ id: hid, at: Date.now(), name: r.name, hero: r.hero, rows: rows.map(x => { const it = item(x.id) || {}; return { id: x.id, name: x.name, icon: x.icon, cat: x.cat, unit: x.unit, used: Math.round((x.before - x.after) * 10) / 10, shelf: it.shelf || 7, max: it.max || x.before }; }).filter(x => x.used > 0) });
+  st.history = st.history.slice(0, 60);
+  st.cookLog = { name: r.name, hero: r.hero, rows, hid };
   st.selected = {}; st.flavour = null; st.options = null; st.recipeBack = null; st.filter = 'all'; st.mode = 'select';
   persist('items');
   st.screen = 'cooking'; render(); window.scrollTo(0, 0);
   const n = Math.min(6, rows.length);
   clearTimeout(cookT); cookT = setTimeout(showCooked, REDUCED() ? 600 : (0.7 + n * 0.18 + (n - 1) * 0.16 + 1.9) * 1000);
+}
+// Put a cooked meal's ingredients back. Works once per meal; items used up are restored too.
+function undoCook(hid) {
+  const h = st.history.find(x => x.id === hid); if (!h || h.undone) return false;
+  h.rows.forEach(x => {
+    let it = item(x.id);
+    if (!it) { it = { id: x.id, name: x.name, cat: x.cat, unit: x.unit, qty: 0, max: x.max, shelf: x.shelf, addedAt: Date.now(), icon: x.icon, ord: Date.now() }; st.items.push(it); }
+    it.qty = Math.round((it.qty + x.used) * 10) / 10; it.max = Math.max(it.max || 0, it.qty);
+  });
+  h.undone = true; h.undoneAt = Date.now();
+  persist('items'); toast(h.rows.length === 1 ? 'Put 1 ingredient back' : 'Put ' + h.rows.length + ' ingredients back');
+  return true;
+}
+const whenLabel = t => { const d = new Date(t), now = new Date(), day = 86400000, time = d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+  const start = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+  return t >= start ? 'Today, ' + time : t >= start - day ? 'Yesterday, ' + time : d.toLocaleDateString([], { weekday: 'short', day: 'numeric', month: 'short' }); };
+function historyHtml() {
+  if (!st.history.length) return `<div class="empty">${icon('rice')}<p>Meals you cook show up here. You can undo one if you change your mind.</p></div>`;
+  return `<div style="display:flex;flex-direction:column;gap:10px">${st.history.map((h, i) => `<div class="card hcard ${h.undone ? 'undone' : ''}" style="animation:rise .4s both;animation-delay:${Math.min(i, 8) * 40}ms">
+    <div class="row" style="gap:12px"><div class="thumb" style="background:${HERO_BG[h.hero] || '#FFF4DD'}">${icon(h.hero)}</div><div style="flex:1;min-width:0"><div class="ff" style="font-size:16px;line-height:1.1">${esc(h.name)}</div><div class="sub" style="margin-top:4px">${esc(whenLabel(h.at))}${h.undone ? ' · undone' : ''}</div></div>
+    ${h.undone ? '<span class="spill dim" style="height:36px">Undone</span>' : `<button class="small undo" data-act="undocook" data-id="${esc(h.id)}">${SVG.undo}Undo</button>`}</div>
+    <div class="pill-row" style="margin-top:10px;gap:6px">${h.rows.map(x => `<div class="mini">${icon(x.icon)}${esc(x.name)}<span class="tag" style="background:var(--tint-pink);color:var(--pink-ink)">−${esc(fmtQ(x.used, x.unit))}</span></div>`).join('')}</div></div>`).join('')}</div>`;
 }
 function showCooked() { clearTimeout(cookT); if (!st.cookLog) return goHome(); st.screen = 'cooked'; render(); window.scrollTo(0, 0); cookT = setTimeout(goHome, REDUCED() ? 4000 : 6500); }
 function goHome() { clearTimeout(cookT); st.cookLog = null; st.screen = 'fridge'; render(); window.scrollTo(0, 0); }
@@ -866,7 +899,7 @@ function viewCooked() {
   return `<div class="cookedhead"><div class="plate" style="background:${HERO_BG[L.hero] || '#FFF4DD'}">${icon(L.hero)}</div><div><h1>Cooked!</h1><div class="sub" style="font-size:15px;white-space:normal;margin-top:4px">${esc(L.name)} · here's what it used</div></div></div>
   <div style="display:flex;flex-direction:column;gap:10px;margin-top:16px">${rows}</div>
   <div style="height:90px"></div>
-  <div class="stack plain"><button class="cta prime homebtn" data-act="cookdone"><span class="prog"></span>${SVG.fridge}Back to fridge</button></div>`;
+  <div class="stack plain" style="flex-direction:row"><div style="display:flex;gap:10px;width:100%;max-width:448px;margin:0 auto"><button class="cta ghost" style="width:auto;padding:0 22px" data-act="undolast">${SVG.undo}Undo</button><button class="cta prime homebtn" style="flex:1" data-act="cookdone"><span class="prog"></span>${SVG.fridge}Back to fridge</button></div></div>`;
 }
 function viewGen() {
   return `<div class="gen"><div class="pot"><span class="steam" style="left:50px;top:10px"></span><span class="steam" style="left:76px;top:2px;animation-delay:.5s"></span><span class="steam" style="left:100px;top:12px;animation-delay:1s"></span>
@@ -896,12 +929,13 @@ function viewRecipe() {
   return h;
 }
 function viewRecipes() {
-  const tabs = [['mine', 'Mine'], ['saved', 'Saved'], ['insta', 'Insta']];
+  const tabs = [['mine', 'Mine'], ['saved', 'Saved'], ['insta', 'Insta'], ['cooked', 'Cooked']];
   let h = `<div class="head"><div class="hl"><h1>Recipes</h1></div><button class="round accent" data-act="importsheet" aria-label="Add a recipe">${SVG.plus}</button></div>`;
   h += `<div class="row" style="gap:8px;margin-bottom:12px">${tabs.map(([id, l]) => `<button class="timec ${st.rtab === id ? 'on' : ''}" style="height:40px;border-radius:20px;font-size:15px" data-act="rtab" data-id="${id}">${l}</button>`).join('')}</div>`;
-  const list = st.recipes.filter(r => (st.rtab === 'saved' ? r.src !== 'insta' && r.src !== 'mine' : r.src === st.rtab));
+  const list = st.rtab === 'cooked' ? [] : st.recipes.filter(r => (st.rtab === 'saved' ? r.src !== 'insta' && r.src !== 'mine' : r.src === st.rtab));
   if (st.rtab === 'insta') h += `<div class="card dark row" style="margin-bottom:10px"><div style="flex:1"><div class="ff" style="font-size:17px">Instagram saves</div><div class="sub" style="color:inherit;opacity:.7">Share a reel to your notes, paste the caption here. Direct import isn't possible from Instagram.</div></div><button class="small" style="background:var(--accent)" data-act="importsheet">Paste</button></div>`;
-  if (!list.length) h += `<div class="empty">${icon('rice')}<p>${st.rtab === 'mine' ? 'Recipes you generate and save land here.' : st.rtab === 'insta' ? 'Nothing from Instagram yet.' : 'Paste a recipe, a link, or a caption and I\'ll file it.'}</p></div>`;
+  if (st.rtab === 'cooked') h += historyHtml();
+  else if (!list.length) h += `<div class="empty">${icon('rice')}<p>${st.rtab === 'mine' ? 'Recipes you generate and save land here.' : st.rtab === 'insta' ? 'Nothing from Instagram yet.' : 'Paste a recipe, a link, or a caption and I\'ll file it.'}</p></div>`;
   h += `<div style="display:flex;flex-direction:column;gap:10px">${list.map((r, i) => { const pct = r.ingredients ? matchPct(r) : 100; return `<div class="card rcard" style="animation:rise .4s both;animation-delay:${i * 40}ms"><div class="thumb" style="background:${HERO_BG[r.hero] || '#FFF4DD'}">${icon(r.hero)}</div><div style="flex:1;min-width:0"><div class="ff" style="font-size:16px;line-height:1.1">${esc(r.name)}</div><div class="row" style="gap:6px;margin-top:6px;font-size:12px;color:var(--muted)">${SVG.clock}${r.time} min</div></div>${ringHtml(pct)}<button class="round accent" style="width:44px;height:44px" data-act="openrecipe" data-id="${r.id}" aria-label="Open ${esc(r.name)}">${SVG.arrow}</button></div>`; }).join('')}</div>`;
   h += `<div style="display:flex;justify-content:center;margin-top:24px"><button class="spill" data-act="settings">${syncLabel()} · Settings</button></div>`;
   if (st.items.some(i => i.qty > 0)) h += `<div style="height:80px"></div><div class="stack"><button class="cta ink" data-act="surprise">${icon('dice', 'ic').replace('class="ic"', 'style="width:30px;height:30px"')}Surprise me${SVG.arrow}</button></div>`;
@@ -1028,6 +1062,8 @@ document.addEventListener('click', async e => {
     case 'accept': startCooking(); return;
     case 'cookskip': if (st.screen === 'cooking') showCooked(); return;
     case 'cookdone': goHome(); return;
+    case 'undolast': { const hid = st.cookLog && st.cookLog.hid; clearTimeout(cookT); undoCook(hid); goHome(); return; }
+    case 'undocook': undoCook(id); break;
     case 'rtab': st.rtab = id; break;
     case 'openrecipe': { const r = st.recipes.find(x => x.id === id); if (!r) break; st.recipe = Object.assign({}, r, { uses: usesFromSaved(r), servings: st.servings }); st.recipeBack = el.dataset.from || 'recipes'; st.screen = 'recipe'; break; }
     case 'scan': st.sheet = 'scan'; st.scan = { files: [], preview: null, detected: null }; st.err = null; break;
