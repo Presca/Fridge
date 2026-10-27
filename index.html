@@ -139,6 +139,10 @@ nav.bar button.on{background:var(--tint-orange)}
 .dots{display:flex;gap:8px}.dots span{width:10px;height:10px;border-radius:50%;animation:dot 1.2s ease-in-out infinite}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
 .note{font-size:13px;color:var(--muted);line-height:1.4}
+.demobar{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:700;color:var(--muted);background:var(--sunk);border-radius:14px;padding:6px 6px 6px 8px;margin-bottom:6px}
+.demobar span:nth-child(2){flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.demobar .tag{background:var(--sun);color:#2A1F1A;border-radius:8px;padding:2px 8px;font-family:var(--display);font-weight:600}
+.demobar button{font-family:var(--display);font-weight:600;font-size:13px;color:var(--ink);background:var(--surface);border-radius:10px;padding:4px 10px;box-shadow:0 2px 0 var(--line)}
 .err{background:var(--tint-pink);color:var(--pink-ink);border-radius:16px;padding:10px 14px;font-size:13px}
 .linkish{color:var(--accent-deep);text-decoration:underline}
 @keyframes pop{from{transform:scale(.55);opacity:0}to{transform:scale(1);opacity:1}}
@@ -272,11 +276,13 @@ const iconOf = i => ICONS[i.icon] ? i.icon : ((guessFor(i.name) || {}).icon || C
 // Nothing secret lives in this file or the repo. The Worker URL is public; the passcode is typed
 // once per device and kept in this browser only; the Anthropic key exists only as a Worker secret.
 const CFG = Object.assign({ workerUrl: '' }, window.FRIDGE_CONFIG || {});
-const LS = 'fridge-v1', KEY = 'fridge-passcode';
+const DEMO = new URLSearchParams(location.search).has('demo');
+const IN_CLAUDE = !DEMO && !!(window.claude && typeof window.claude.use === 'function');
+const LS = DEMO ? 'fridge-demo-v1' : 'fridge-v1', KEY = 'fridge-passcode';
 const lsGet = k => { try { return localStorage.getItem(k); } catch (e) { return null; } };
 const lsSet = (k, v) => { try { v == null ? localStorage.removeItem(k) : localStorage.setItem(k, v); } catch (e) {} };
 const passcode = () => lsGet(KEY) || '';
-const remoteOn = () => !!(CFG.workerUrl && passcode());
+const remoteOn = () => !DEMO && !IN_CLAUDE && !!(CFG.workerUrl && passcode());
 let localUpdatedAt = 0;
 function cacheLocal() { lsSet(LS, JSON.stringify({ items: st.items, recipes: st.recipes, servings: st.servings, updatedAt: localUpdatedAt })); }
 function loadLocal() { try { const j = JSON.parse(lsGet(LS) || 'null'); if (j) { st.items = j.items || []; st.recipes = j.recipes || []; st.servings = j.servings || 2; localUpdatedAt = j.updatedAt || 0; } } catch (e) {} st.loaded = true; }
@@ -286,6 +292,7 @@ function api(path, opts = {}) {
 let saveT = null;
 function persist() {
   localUpdatedAt = Date.now(); cacheLocal();
+  if (IN_CLAUDE) { syncDb(); return; }
   if (!remoteOn()) return;
   clearTimeout(saveT);
   saveT = setTimeout(async () => {
@@ -310,7 +317,7 @@ async function pull() {
     render();
   } catch (e) {}
 }
-function connectDb() { pull(); document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') pull(); }); }
+function connectDb() { if (IN_CLAUDE) { connectClaudeDb(); return; } if (DEMO) return; pull(); document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') pull(); }); }
 
 function shrinkToJpeg(file) {
   return new Promise((res, rej) => {
@@ -340,18 +347,245 @@ const workerAi = {
     try { r = await api('/ai', { method: 'POST', body: JSON.stringify({ prompt: prompt + '\n\nReply with the JSON only, no other text.', images }) }); }
     catch (e) { throw { code: 'upstream_error' }; }
     const j = await r.json().catch(() => ({}));
-    if (r.status === 401) throw { code: 'not_granted' };
+    if (r.status === 401) throw { code: 'bad_passcode' };
     if (r.status === 429) throw { code: 'rate_limited' };
     if (!r.ok) throw { code: j.code || 'upstream_error' };
     return parseJson(String(j.text || ''));
   }
 };
+// ───────────────────────── demo AI (GitHub Pages ?demo) ─────────────────────────
+// Pre-written answers so the whole flow can be tried without Claude. Nothing here calls a server.
+const wait = ms => new Promise(r => setTimeout(r, ms));
+const titleCase = s => String(s).trim().replace(/\s+/g, ' ').replace(/^./, c => c.toUpperCase());
+const UNIT_WORDS = [[/^(g|grams?|gr)$/i, 'g', 1], [/^kg|kilos?$/i, 'g', 1000], [/^(ml)$/i, 'ml', 1], [/^(l|litres?|liters?)$/i, 'ml', 1000], [/^(pcs?|pieces?|x)$/i, 'pcs', 1],
+  [/^cans?|tins?$/i, 'can', 1], [/^packs?|packets?|bags?$/i, 'pack', 1], [/^bunch(es)?$/i, 'bunch', 1], [/^cloves?$/i, 'cloves', 1], [/^fillets?$/i, 'fillets', 1],
+  [/^slices?$/i, 'slices', 1], [/^cups?$/i, 'cups', 1], [/^heads?$/i, 'head', 1], [/^blocks?$/i, 'block', 1]];
+function demoLine(raw) {
+  let s = String(raw).trim().replace(/^[-•*·]\s*/, '').replace(/^\d+[.)]\s+/, '');
+  s = s.replace(/^(a|an|some|one)\s+/i, '').replace(/^(bag|pack|packet|box|tub|jar|bottle|carton)\s+of\s+/i, '');
+  if (!s) return null;
+  let qty = null, unit = null;
+  const m = s.match(/^(\d+(?:[.,]\d+)?)\s*([a-zA-Z]+)?\s+(?:of\s+)?(.+)$/) || s.match(/^(\d+(?:[.,]\d+)?)(g|kg|ml|l)\s+(.+)$/i);
+  if (m) {
+    qty = Number(m[1].replace(',', '.'));
+    const u = m[2] && UNIT_WORDS.find(([re]) => re.test(m[2]));
+    if (u) { unit = u[1]; qty *= u[2]; s = m[3]; } else s = (m[2] ? m[2] + ' ' : '') + m[3];
+  }
+  const g = guessFor(s) || { icon: null, cat: 'other', shelf: 7 };
+  if (!unit) unit = qty ? 'pcs' : ({ protein: 'g', carbs: 'pack', fibre: 'bunch', seasoning: 'pcs', dairy: 'pcs' }[g.cat] || 'pcs');
+  if (!qty) qty = unit === 'g' ? 300 : 1;
+  return { name: titleCase(s.replace(/\s*\(.*?\)\s*/g, ' ')).slice(0, 40), qty, unit, cat: g.cat, shelfDays: g.shelf, icon: g.icon };
+}
+const demoList = text => String(text).split(/\n|,|;|\band\b/i).map(demoLine).filter(Boolean);
+const DEMO_SCAN = [
+  { name: 'Cherry tomatoes', qty: 12, unit: 'pcs', cat: 'fibre', shelfDays: 7, icon: 'tomato' },
+  { name: 'Salmon', qty: 2, unit: 'fillets', cat: 'protein', shelfDays: 2, icon: 'salmon' },
+  { name: 'Bok choy', qty: 1, unit: 'bunch', cat: 'fibre', shelfDays: 4, icon: 'spinach' },
+  { name: 'Mushrooms', qty: 250, unit: 'g', cat: 'fibre', shelfDays: 5, icon: 'mushroom' },
+  { name: 'Greek yogurt', qty: 500, unit: 'g', cat: 'dairy', shelfDays: 10, icon: 'milk' },
+  { name: 'Lime', qty: 3, unit: 'pcs', cat: 'seasoning', shelfDays: 21, icon: 'lemon' }
+];
+// Recipe templates: {h} hero, {v} vegetables, {c} carb.
+const DEMO_DISHES = [
+  { name: '{H} stir-fry', flav: ['spicy', 'umami'], time: 15, steps: ['Slice everything into bite-size pieces', 'Sear the {h} in a very hot pan, 4 min', 'Toss in the {v} with garlic and soy', 'Serve over {c}'] },
+  { name: '{H} rice bowl', flav: ['comfort', 'umami'], time: 20, steps: ['Start the {c}', 'Pan-fry the {h} until golden', 'Wilt the {v} in the same pan', 'Pile it into bowls and drizzle with soy'] },
+  { name: 'Lime {h} salad', flav: ['fresh'], time: 15, steps: ['Cook the {h} and let it rest 2 min', 'Toss the {v} with lime juice and oil', 'Slice the {h} on top', 'Serve with {c} on the side'] },
+  { name: 'Cheesy {h} bake', flav: ['cheesy', 'comfort'], time: 30, steps: ['Heat the oven to 200 °C', 'Layer the {h} and {v} in a dish', 'Cover with cheese and bake 20 min', 'Serve with {c}'] },
+  { name: 'Chili {h} fried rice', flav: ['spicy'], time: 20, steps: ['Fry garlic and chili for 1 min', 'Add the {h} and cook through', 'Stir in the {c} and {v}', 'Finish with soy and a squeeze of lime'] },
+  { name: 'Garlic {h} noodles', flav: ['umami', 'comfort'], time: 15, steps: ['Boil the {c} and drain', 'Fry plenty of garlic in oil', 'Add the {h} and {v}, 4 min', 'Toss everything with soy'] },
+  { name: '{H} & {v} soup', flav: ['comfort', 'fresh'], time: 25, steps: ['Soften garlic in a pot, 1 min', 'Add the {h} and 600 ml water, simmer 12 min', 'Add the {v} for the last 3 min', 'Season and serve with {c}'] },
+  { name: 'Loaded {v} omelette', flav: ['comfort', 'cheesy'], time: 10, needs: 'egg', steps: ['Beat the eggs with a pinch of salt', 'Soften the {v} in a pan', 'Pour in the eggs and fold when just set', 'Serve with {c}'] }
+];
+function demoPortion(it) {
+  const s = st.servings, c = catOf(it.cat);
+  const q = it.unit === 'g' ? ({ protein: 150, carbs: 90, fibre: 100, dairy: 60, seasoning: 10 }[c] || 80) * s
+    : it.unit === 'ml' ? 15 * s : it.unit === 'pcs' ? Math.max(1, Math.ceil(s * (c === 'protein' ? 1 : 0.5)))
+    : it.unit === 'cloves' ? 2 : it.unit === 'fillets' ? s : it.unit === 'slices' ? s : 1;
+  return Math.min(it.qty, Math.max(stepOf(it) / 2, q));
+}
+function demoIdeas() {
+  const have = st.items.filter(i => i.qty > 0);
+  const soon = [...have].sort((a, b) => daysLeft(a) - daysLeft(b));
+  let picked = selIds().map(item);
+  if (!picked.length) picked = soon.filter(i => !['seasoning', 'dairy'].includes(catOf(i.cat))).slice(0, 2);
+  const of = c => picked.filter(i => catOf(i.cat) === c);
+  const hero = of('protein')[0] || picked[0] || have[0];
+  if (!hero) return [];
+  const veg = of('fibre').length ? of('fibre') : soon.filter(i => catOf(i.cat) === 'fibre').slice(0, 1);
+  const carb = of('carbs')[0] || have.find(i => catOf(i.cat) === 'carbs');
+  const flav = st.flavour || 'surprise';
+  const egg = have.find(i => /egg/i.test(i.name));
+  const shown = new Set(st.shown);
+  const fill = (s, vName) => s.replace(/\{H\}/g, titleCase(hero.name)).replace(/\{h\}/g, hero.name.toLowerCase()).replace(/\{v\}/g, vName).replace(/\{c\}/g, carb ? carb.name.toLowerCase() : 'rice or bread');
+  let pool = DEMO_DISHES.filter(d => !d.needs || egg).map((d, i) => ({ d, score: (flav === 'surprise' || d.flav.includes(flav) ? 2 : 0) + (d.time <= st.time ? 1 : 0) + ((i + st.shown.length) % 3) / 10 }));
+  pool.sort((a, b) => b.score - a.score);
+  const out = [];
+  for (const { d } of pool) {
+    if (out.length === 3) break;
+    const vName = veg.length ? veg.map(v => v.name.toLowerCase()).join(' and ') : 'greens';
+    const name = fill(d.name, veg[0] ? veg[0].name.toLowerCase() : 'greens').slice(0, 40);
+    if (shown.has(name)) continue;
+    const use = [...new Set([...picked, ...(d.needs === 'egg' ? [egg] : []), ...veg, carb,
+      have.find(i => catOf(i.cat) === 'seasoning' && (/chil/i.test(i.name) ? d.flav.includes('spicy') : /lime|lemon/i.test(i.name) ? d.flav.includes('fresh') : true)),
+      d.flav.includes('cheesy') ? have.find(i => /cheese|cheddar/i.test(i.name)) : null].filter(Boolean))];
+    const uses = {}; use.forEach(it => { uses[it.id] = demoPortion(it); });
+    out.push({ name, time: Math.min(d.time, st.time), flavour: flav === 'surprise' ? d.flav[0] : flav, hero: iconOf(d.needs === 'egg' ? egg : hero), uses,
+      steps: d.steps.map(s => fill(s, vName)), nutrients: { protein: use.some(i => catOf(i.cat) === 'protein'), carbs: use.some(i => catOf(i.cat) === 'carbs'), fibre: use.some(i => catOf(i.cat) === 'fibre') } });
+  }
+  return out.length ? out : (st.shown = [], demoIdeas());
+}
+function demoRecipe(text) {
+  const t = String(text).trim();
+  if (/^https?:\/\/\S+$/.test(t)) {
+    const words = (t.split('/').filter(Boolean).pop() || 'recipe').replace(/[-_]+/g, ' ').replace(/\.\w+$/, '');
+    return { name: titleCase(words).slice(0, 40), time: 25, flavour: 'comfort', hero: 'rice', servings: 2,
+      ingredients: [{ name: 'Garlic', qty: 2, unit: 'cloves', cat: 'seasoning' }, { name: 'Rice', qty: 150, unit: 'g', cat: 'carbs' }, { name: 'Spinach', qty: 100, unit: 'g', cat: 'fibre' }],
+      steps: ['Cook the rice', 'Fry the garlic until fragrant', 'Stir through the spinach and serve'] };
+  }
+  const lines = t.split('\n').map(l => l.trim()).filter(Boolean);
+  const name = (lines.find(l => !/^\d/.test(l) && l.length < 60) || 'My recipe').replace(/^#+\s*/, '').replace(/[^\p{L}\p{N}\s&'-]/gu, '').trim();
+  const stepAt = lines.findIndex(l => /^(method|steps|instructions|directions)\b/i.test(l));
+  const ingLines = lines.filter((l, i) => (stepAt < 0 || i < stepAt) && /^[-•*]?\s*\d/.test(l));
+  const stepLines = (stepAt >= 0 ? lines.slice(stepAt + 1) : lines.filter(l => /^\d+[.)]\s/.test(l))).map(l => l.replace(/^\d+[.)]\s*/, '')).filter(l => l.length > 3);
+  const ingredients = ingLines.map(demoLine).filter(Boolean).map(x => ({ name: x.name, qty: x.qty, unit: x.unit, cat: x.cat }));
+  const hero = (ingredients.map(x => guessFor(x.name)).find(Boolean) || {}).icon || 'rice';
+  return { name: titleCase(name || 'My recipe').slice(0, 40), time: 25, flavour: 'comfort', hero, servings: 2,
+    ingredients: ingredients.length ? ingredients : [{ name: 'Eggs', qty: 2, unit: 'pcs', cat: 'protein' }],
+    steps: stepLines.length ? stepLines.slice(0, 8) : ['Prep the ingredients', 'Cook until done', 'Serve warm'] };
+}
+const demoAi = {
+  async json(prompt) {
+    if (/^These photos show groceries/.test(prompt)) { await wait(1800); return DEMO_SCAN.map(x => Object.assign({}, x)); }
+    if (/^I just bought these groceries/.test(prompt)) { await wait(1100); return demoList((prompt.match(/<<<\n([\s\S]*?)\n>>>/) || [])[1] || ''); }
+    if (/^You are suggesting 3 different/.test(prompt)) { await wait(2200); return demoIdeas(); }
+    if (/^Extract a cooking recipe/.test(prompt)) { await wait(1400); return demoRecipe(prompt.split('\n\nTEXT:\n')[1] || ''); }
+    const m = prompt.match(/^For the grocery item "([^"]*)"/);
+    if (m) { await wait(600); const x = demoLine(m[1]) || { name: m[1], cat: 'other', shelfDays: 7, icon: null, unit: 'pcs' }; return Object.assign(x, { qty: 1 }); }
+    throw { code: 'upstream_error' };
+  }
+};
+function seedDemo() {
+  const now = Date.now(), ago = d => now - d * DAY;
+  const it = (name, qty, unit, cat, shelf, icon, added = 0) => ({ id: slug(name), name, qty, unit, cat, shelf, icon, max: qty || 1, addedAt: ago(added), ord: now + st.items.length });
+  st.items = [];
+  [['Chicken thigh', 600, 'g', 'protein', 3, 'chicken', 2], ['Salmon', 2, 'fillets', 'protein', 2, 'salmon', 1], ['Eggs', 10, 'pcs', 'protein', 21, 'egg'],
+   ['Firm tofu', 1, 'block', 'protein', 5, 'tofu', 1], ['Jasmine rice', 2000, 'g', 'carbs', 365, 'rice'], ['Udon noodles', 3, 'pack', 'carbs', 30, 'noodle'],
+   ['Sourdough', 6, 'slices', 'carbs', 5, 'bread', 3], ['Spinach', 200, 'g', 'fibre', 4, 'spinach', 3], ['Broccoli', 1, 'head', 'fibre', 5, 'broccoli'],
+   ['Cherry tomatoes', 12, 'pcs', 'fibre', 7, 'tomato'], ['Mushrooms', 250, 'g', 'fibre', 4, 'mushroom'], ['Garlic', 8, 'cloves', 'seasoning', 60, 'garlic'],
+   ['Soy sauce', 250, 'ml', 'seasoning', 365, 'soy'], ['Chili', 3, 'pcs', 'seasoning', 10, 'chili'], ['Lime', 2, 'pcs', 'seasoning', 21, 'lemon'],
+   ['Cheddar', 200, 'g', 'dairy', 21, 'cheese'], ['Milk', 0, 'ml', 'dairy', 7, 'milk']].forEach(a => st.items.push(it(...a)));
+  st.items.find(i => i.id === 'milk').max = 1000;
+  const ing = (name, qty, unit, cat) => ({ name, qty, unit, cat });
+  st.recipes = [
+    { id: 'r-demo-1', src: 'saved', name: 'Garlic butter salmon', time: 20, flavour: 'umami', hero: 'salmon', servings: 2,
+      ingredients: [ing('Salmon', 2, 'fillets', 'protein'), ing('Garlic', 3, 'cloves', 'seasoning'), ing('Spinach', 100, 'g', 'fibre'), ing('Lime', 1, 'pcs', 'seasoning'), ing('Rice', 150, 'g', 'carbs')],
+      steps: ['Pat the salmon dry and season', 'Sear skin-side down 4 min, flip for 2', 'Melt butter with garlic and spoon it over', 'Wilt the spinach in the pan', 'Serve with rice and lime'] },
+    { id: 'r-demo-2', src: 'insta', name: 'Crispy chili tofu', time: 25, flavour: 'spicy', hero: 'tofu', servings: 2,
+      ingredients: [ing('Firm tofu', 1, 'block', 'protein'), ing('Chili', 2, 'pcs', 'seasoning'), ing('Soy sauce', 30, 'ml', 'seasoning'), ing('Broccoli', 1, 'head', 'fibre'), ing('Spring onion', 2, 'pcs', 'fibre')],
+      steps: ['Press and cube the tofu', 'Toss in cornflour and fry until crisp', 'Fry chili and garlic, add soy', 'Toss the tofu and broccoli through'] },
+    { id: 'r-demo-3', src: 'mine', name: 'Mushroom cheese toastie', time: 10, flavour: 'cheesy', hero: 'cheese', servings: 1,
+      ingredients: [ing('Sourdough', 2, 'slices', 'carbs'), ing('Cheddar', 60, 'g', 'dairy'), ing('Mushrooms', 100, 'g', 'fibre')],
+      steps: ['Fry the mushrooms until golden', 'Fill the bread with cheese and mushrooms', 'Toast in the pan 3 min a side'] },
+    { id: 'r-demo-4', src: 'saved', name: 'Shakshuka', time: 25, flavour: 'spicy', hero: 'egg', servings: 2,
+      ingredients: [ing('Eggs', 4, 'pcs', 'protein'), ing('Cherry tomatoes', 10, 'pcs', 'fibre'), ing('Onion', 1, 'pcs', 'fibre'), ing('Chili', 1, 'pcs', 'seasoning'), ing('Garlic', 2, 'cloves', 'seasoning')],
+      steps: ['Soften onion, garlic and chili', 'Add the tomatoes and simmer 10 min', 'Make wells and crack in the eggs', 'Cover until the whites set'] }
+  ];
+  st.servings = 2; persist('items');
+}
+
+// ───────────────────────── Claude artifact runtime ─────────────────────────
+// Inside Claude, AI runs on the viewer's own Claude account (sample) and the fridge is shared
+// through the artifact's database (db): one document per item and per recipe.
+const OFF_CODES = ['not_granted', 'sampling_disabled', 'not_declared', 'capability_disabled', 'capability_removed'];
+async function connectClaude() {
+  const sample = await window.claude.use('sample').catch(() => null);
+  if (!sample) { st.aiState = 'unavailable'; render(); return; }
+  const lim = await sample.limits().catch(() => null);
+  st.canImage = !!(lim && lim.images); st.imgMax = (lim && lim.images && lim.images.maxCount) || 1;
+  st.imgAccept = (lim && lim.images && lim.images.mediaTypes.join(',')) || 'image/*';
+  st.ai = {
+    async json(prompt, opts = {}) {
+      const o = {};
+      if (opts.modelTier) o.modelTier = opts.modelTier;
+      if (opts.cache === false) o.cache = false;
+      if (opts.images && opts.images.length) o.images = Array.from(opts.images).slice(0, st.imgMax);
+      try { return await sample.json(prompt, o); }
+      catch (e) {
+        const code = (e && e.code) || 'upstream_error';
+        if (OFF_CODES.includes(code)) { st.ai = null; st.aiState = code === 'not_granted' ? 'declined' : 'unavailable'; }
+        if (code === 'images_unavailable') { st.canImage = false; st.scan.typing = true; }
+        throw { code };
+      }
+    }
+  };
+  render();
+}
+let cdb = null, prefsSynced = null, syncing = false, syncAgain = false;
+const synced = { items: new Map(), recipes: new Map() }, dbReady = { items: false, recipes: false };
+function softRender() { if (st.sheet) app.innerHTML = (DEMO ? demoBar() : '') + viewFor()(); else render(); }
+async function connectClaudeDb() {
+  cdb = await window.claude.use('db').catch(() => null);
+  if (!cdb) { st.dbState = 'off'; st.loaded = true; render(); return; }
+  window.claude.use('user').then(u => u && u.can('data.write')).then(ok => { if (ok === false) { st.readOnly = true; render(); } }).catch(() => {});
+  const listen = (col, apply) => cdb.collection(col).onSnapshot(snap => {
+    const list = snap.docs.map(d => Object.assign({}, d.data()));
+    apply(list);
+    synced[col] = new Map(list.map(x => [x.id, JSON.stringify(x)]));
+    if (!snap.metadata.fromCache) dbReady[col] = true;
+    if (dbReady.items && dbReady.recipes) { st.loaded = true; st.dbState = 'live'; }
+    cacheLocal(); softRender();
+  }, () => { st.dbState = 'off'; st.loaded = true; render(); });
+  listen('items', list => { st.items = list.sort((a, b) => ((a.ord || 0) - (b.ord || 0)) || String(a.id).localeCompare(b.id)); Object.keys(st.selected).forEach(k => { if (!item(k)) delete st.selected[k]; }); });
+  listen('recipes', list => { st.recipes = list.sort((a, b) => (b.savedAt || 0) - (a.savedAt || 0)); });
+  cdb.doc('prefs/household').onSnapshot(s => { if (s.exists) { const v = Number(s.data().servings); if (v >= 1 && v <= 6) { st.servings = v; prefsSynced = v; softRender(); } } }, () => {});
+}
+async function syncDb() {
+  if (!cdb || st.readOnly || !dbReady.items || !dbReady.recipes) return;
+  if (syncing) { syncAgain = true; return; }
+  syncing = true;
+  try {
+    do {
+      syncAgain = false;
+      for (const [col, list] of [['items', st.items], ['recipes', st.recipes]]) {
+        const m = synced[col], seen = new Set();
+        for (const x of list) {
+          seen.add(x.id); const j = JSON.stringify(x);
+          if (m.get(x.id) !== j) { await cdb.collection(col).doc(x.id).set(JSON.parse(j)); m.set(x.id, j); }
+        }
+        for (const id of [...m.keys()]) if (!seen.has(id)) { await cdb.collection(col).doc(id).delete(); m.delete(id); }
+      }
+      if (prefsSynced !== st.servings) { await cdb.doc('prefs/household').set({ servings: st.servings }); prefsSynced = st.servings; }
+    } while (syncAgain);
+  } catch (e) {
+    const code = e && e.code;
+    if (code === 'invalid_argument') { st.readOnly = true; toast('You can look at this fridge but not change it.'); }
+    else if (code === 'quota_exceeded') toast('Fridge storage is full. Delete some old recipes.');
+    else toast('Could not save. Check your connection.');
+  } finally { syncing = false; }
+}
+function demoBar() { return `<div class="demobar" role="note"><span class="tag">Demo</span><span>Sample fridge · simulated AI</span><button data-act="settings">About</button></div>`; }
+function aiOffMsg() {
+  if (IN_CLAUDE) return st.aiState === 'declined' ? 'You chose not to let this page use Claude. Reload the page and choose Allow to scan and get recipes.' : 'Claude is not available on this page right now.';
+  return CFG.workerUrl ? 'Enter your passcode in Settings to turn on scanning and recipes.' : 'Scanning and recipes need the Fridge Worker set up (see the README). The demo shows how they work.';
+}
+function aiFixButton() {
+  if (IN_CLAUDE || DEMO) return '';
+  return CFG.workerUrl ? `<button class="cta prime" data-act="settings">Open Settings</button>` : `<a class="cta prime" href="./?demo">See the demo</a>`;
+}
+function syncLabel() {
+  if (DEMO) return 'Demo';
+  if (IN_CLAUDE) return st.readOnly ? 'View only' : st.dbState === 'live' ? 'Shared with household' : 'On this device';
+  return remoteOn() ? 'Synced' : 'Not synced';
+}
+
 function connectAi() {
+  if (DEMO) { st.ai = demoAi; st.canImage = true; st.imgMax = 3; st.imgAccept = 'image/*'; render(); return; }
+  if (IN_CLAUDE) { connectClaude(); return; }
   st.ai = remoteOn() ? workerAi : null;
   st.canImage = !!st.ai; st.imgMax = 3; st.imgAccept = 'image/*';
   render();
 }
-const AI_COPY = { not_granted: 'Passcode rejected. Check it in Settings.', rate_limited: 'Too many requests. Try again in a minute.', invalid_json: 'Got a messy answer. Try again.', image_rejected: 'Could not read that photo. Try another one.', upstream_error: 'Connection hiccup. Try again.', budget: 'Monthly AI budget reached.', too_large: 'That was too much to send at once.', cancelled: '' };
+const AI_COPY = { bad_passcode: 'Passcode rejected. Check it in Settings.', not_granted: 'Claude is not allowed on this page.', sampling_disabled: 'Claude is not available for this account.', refused: 'Claude declined that one. Try different wording.', session_expired: 'Sign in to Claude again, then try again.', images_unavailable: 'Photos are not available here. Type a list instead.', empty_completion: 'Got an empty answer. Try again.', prompt_too_large: 'That was too much to send at once.', rate_limited: 'Too many requests. Try again in a minute.', invalid_json: 'Got a messy answer. Try again.', image_rejected: 'Could not read that photo. Try another one.', upstream_error: 'Connection hiccup. Try again.', budget: 'Monthly AI budget reached.', too_large: 'That was too much to send at once.', cancelled: '' };
 const aiErr = e => AI_COPY[e && e.code] ?? 'Something went wrong (' + (e && e.code || 'unknown') + ').';
 
 // ───────────────────────── AI calls ─────────────────────────
@@ -394,7 +628,7 @@ function addIncoming(list) {
     const id = slug(n.name);
     const ex = item(id);
     if (ex) { ex.qty = (ex.unit === n.unit ? ex.qty + n.qty : n.qty); ex.unit = n.unit; ex.addedAt = Date.now(); ex.exp = null; ex.max = Math.max(ex.max || 0, ex.qty); ex.shelf = n.shelf || ex.shelf; }
-    else st.items.push({ id, name: n.name, cat: n.cat, qty: n.qty, unit: n.unit, max: n.qty, shelf: n.shelf, addedAt: Date.now(), icon: n.icon });
+    else st.items.push({ id, name: n.name, cat: n.cat, qty: n.qty, unit: n.unit, max: n.qty, shelf: n.shelf, addedAt: Date.now(), icon: n.icon, ord: Date.now() + st.items.length });
   });
   persist('items');
 }
@@ -432,7 +666,7 @@ async function importRecipe(text) {
   const prompt = `Extract a cooking recipe from the text below (it may be an Instagram caption, a pasted web page, a URL, or my own notes). If it is only a URL, infer the dish from the URL and your knowledge. Reply with ONLY one JSON object: {"name": dish name, "time": minutes (number), "flavour": one of ["spicy","comfort","fresh","umami","cheesy","surprise"], "hero": one of ${JSON.stringify(KEYS)}, "ingredients": [{"name": string, "qty": number, "unit": one of ${JSON.stringify(UNITS)}, "cat": one of ["protein","carbs","fibre","seasoning","dairy","other"]}], "steps": [short imperative steps], "servings": number}.\n\nTEXT:\n${text.slice(0, 12000)}`;
   try {
     const r = await st.ai.json(prompt);
-    const rec = { id: 'r-' + Date.now(), name: String(r.name || 'Untitled').slice(0, 60), time: Number(r.time) || 20, flavour: FLAV.some(f => f.id === r.flavour) ? r.flavour : 'comfort', hero: ICONS[r.hero] ? r.hero : 'rice', ingredients: (Array.isArray(r.ingredients) ? r.ingredients : []).map(x => ({ name: String(x.name || '').slice(0, 40), qty: Number(x.qty) || 1, unit: UNITS.includes(x.unit) ? x.unit : 'pcs', cat: catOf(x.cat) })).filter(x => x.name), steps: (Array.isArray(r.steps) ? r.steps : []).map(String), servings: Number(r.servings) || 2, src: st.rtab === 'insta' ? 'insta' : 'saved' };
+    const rec = { id: 'r-' + Date.now(), name: String(r.name || 'Untitled').slice(0, 60), time: Number(r.time) || 20, flavour: FLAV.some(f => f.id === r.flavour) ? r.flavour : 'comfort', hero: ICONS[r.hero] ? r.hero : 'rice', ingredients: (Array.isArray(r.ingredients) ? r.ingredients : []).map(x => ({ name: String(x.name || '').slice(0, 40), qty: Number(x.qty) || 1, unit: UNITS.includes(x.unit) ? x.unit : 'pcs', cat: catOf(x.cat) })).filter(x => x.name), steps: (Array.isArray(r.steps) ? r.steps : []).map(String), servings: Number(r.servings) || 2, src: st.rtab === 'insta' ? 'insta' : 'saved', savedAt: Date.now() };
     st.recipes.unshift(rec); persist('recipes'); st.sheet = null; toast('Recipe saved');
   } catch (e) { st.err = aiErr(e); }
   st.busy = null; render();
@@ -472,7 +706,9 @@ function ringHtml(pct) {
 
 // ───────────────────────── UI helpers ─────────────────────────
 let toastT = null;
-function toast(msg) { st.toast = msg; render(); clearTimeout(toastT); toastT = setTimeout(() => { st.toast = null; render(); }, 2600); }
+// The toast is added and removed on its own so it never redraws an open sheet (and wipes what is typed in it).
+function toast(msg) { st.toast = msg; showToast(); clearTimeout(toastT); toastT = setTimeout(() => { st.toast = null; showToast(); }, 2600); }
+function showToast() { const old = overlay.querySelector('.toast'); if (old) old.remove(); if (st.toast) overlay.insertAdjacentHTML('beforeend', toastHtml()); }
 function chip(id, label, dot, on, count) { return `<button class="chip ${on ? 'on' : ''}" data-act="filter" data-id="${id}"><span class="dot" style="background:${dot}"></span>${esc(label)}${count ? `<span class="cnt">${count}</span>` : ''}</button>`; }
 function pillFor(i) { const d = daysLeft(i); if (i.qty > 0 && d <= 2) return `<span class="pill" style="background:${daysBg(d)}">${daysLabel(d)}</span>`; if (i.qty > 0 && i.max && i.qty <= i.max * 0.25) return `<span class="pill low">low</span>`; return ''; }
 
@@ -489,7 +725,7 @@ function viewFridge() {
     <button class="round accent ${st.ai && st.canImage ? 'pulse' : ''}" data-act="scan" aria-label="Scan groceries">${SVG.cam}</button></div></div>`;
   h += `<div class="chips">${chip('all', 'All', 'var(--ink)', st.filter === 'all')}${Object.keys(CATS).filter(c => c !== 'other' || st.items.some(i => catOf(i.cat) === 'other')).map(c => chip(c, CATS[c].label, CATS[c].color, st.filter === c)).join('')}${chip('finished', 'Finished', '#B8A99A', fin, finished.length)}</div>`;
   if (!st.loaded) h += `<div class="empty"><p>Opening your fridge…</p></div>`;
-  else if (!st.items.length) h += `<div class="empty">${icon('fridge')}<h2 class="ff" style="margin:0;font-size:24px">Your fridge is empty</h2><p>${st.ai && st.canImage ? 'Snap a photo of your groceries and I\'ll log them, or add items by hand.' : 'Add items by hand with the + button.'}${st.ai ? '' : ' Turn on AI in Settings (Recipes tab) to scan and get recipes.'}</p>
+  else if (!st.items.length) h += `<div class="empty">${icon('fridge')}<h2 class="ff" style="margin:0;font-size:24px">Your fridge is empty</h2><p>${st.ai && st.canImage ? 'Snap a photo of your groceries and I\'ll log them, or add items by hand.' : 'Add items by hand with the + button.'}${st.ai ? '' : ' ' + aiOffMsg()}</p>
     <div class="row"><button class="cta prime" style="width:auto;padding:0 22px" data-act="scan">${SVG.cam} Scan</button><button class="cta ghost" style="width:auto;padding:0 22px" data-act="add">${SVG.plus} Add</button></div></div>`;
   else {
     if (!edit && !fin && soon.length) h += `<div class="card dark" style="margin-bottom:14px"><div class="row" style="margin-bottom:10px"><span style="color:var(--sun)">${SVG.clock}</span><span class="ff" style="font-size:16px">Use soon</span><button class="small" style="margin-left:auto;background:var(--accent);height:36px;border-radius:18px;font-size:14px" data-act="picksoon">Pick all ${SVG.check}</button></div><div class="hrow">${soon.map(i => `<div class="mini">${icon(iconOf(i))}${esc(i.name)}<span class="tag" style="background:${daysBg(daysLeft(i))}">${daysLabel(daysLeft(i))}</span></div>`).join('')}</div></div>`;
@@ -531,7 +767,7 @@ function viewCraving() {
   h += `<div style="height:${st.ai ? 90 : 170}px"></div>`;
   h += st.ai
     ? `<div class="stack"><button class="cta prime pulse" data-act="cook">${SVG.flame.replace('width="16" height="16"', 'width="24" height="24"').replace('fill="#FF7A45"', 'fill="#2A1F1A"')}Show me recipes</button></div>`
-    : `<div class="stack"><div class="card warm"><div class="ff" style="font-size:16px">New recipe ideas need AI</div><p class="note" style="margin:4px 0 0;color:inherit">${CFG.workerUrl ? 'Enter your passcode in Settings to turn it on.' : 'Set up the Fridge Worker first (see the README).'}${saved.length ? ' Your saved recipes above still work.' : ''}</p></div>${CFG.workerUrl ? `<button class="cta prime" data-act="settings">Open Settings</button>` : ''}</div>`;
+    : `<div class="stack"><div class="card warm"><div class="ff" style="font-size:16px">New recipe ideas need AI</div><p class="note" style="margin:4px 0 0;color:inherit">${aiOffMsg()}${saved.length ? ' Your saved recipes above still work.' : ''}</p></div>${aiFixButton()}</div>`;
   return h + nav('fridge');
 }
 function viewOptions() {
@@ -578,7 +814,7 @@ function viewRecipes() {
   if (st.rtab === 'insta') h += `<div class="card dark row" style="margin-bottom:10px"><div style="flex:1"><div class="ff" style="font-size:17px">Instagram saves</div><div class="sub" style="color:inherit;opacity:.7">Share a reel to your notes, paste the caption here. Direct import isn't possible from Instagram.</div></div><button class="small" style="background:var(--accent)" data-act="importsheet">Paste</button></div>`;
   if (!list.length) h += `<div class="empty">${icon('rice')}<p>${st.rtab === 'mine' ? 'Recipes you generate and save land here.' : st.rtab === 'insta' ? 'Nothing from Instagram yet.' : 'Paste a recipe, a link, or a caption and I\'ll file it.'}</p></div>`;
   h += `<div style="display:flex;flex-direction:column;gap:10px">${list.map((r, i) => { const pct = r.ingredients ? matchPct(r) : 100; return `<div class="card rcard" style="animation:rise .4s both;animation-delay:${i * 40}ms"><div class="thumb" style="background:${HERO_BG[r.hero] || '#FFF4DD'}">${icon(r.hero)}</div><div style="flex:1;min-width:0"><div class="ff" style="font-size:16px;line-height:1.1">${esc(r.name)}</div><div class="row" style="gap:6px;margin-top:6px;font-size:12px;color:var(--muted)">${SVG.clock}${r.time} min</div></div>${ringHtml(pct)}<button class="round accent" style="width:44px;height:44px" data-act="openrecipe" data-id="${r.id}" aria-label="Open ${esc(r.name)}">${SVG.arrow}</button></div>`; }).join('')}</div>`;
-  h += `<div style="display:flex;justify-content:center;margin-top:24px"><button class="spill" data-act="settings">${remoteOn() ? 'Synced' : 'Not synced'} · Settings</button></div>`;
+  h += `<div style="display:flex;justify-content:center;margin-top:24px"><button class="spill" data-act="settings">${syncLabel()} · Settings</button></div>`;
   return h + nav('recipes');
 }
 function nav(on) { return `<nav class="bar" aria-label="Main"><button class="${on === 'fridge' ? 'on' : ''}" data-act="go" data-to="fridge">${SVG.fridge}Fridge</button><button class="${on === 'recipes' ? 'on' : ''}" data-act="go" data-to="recipes">${SVG.book}Recipes</button></nav>`; }
@@ -591,12 +827,13 @@ function sheetHtml() {
     const sc = st.scan;
     body = `<h2>Scan groceries</h2>`;
     if (!st.ai) {
-      body += `<div class="card warm" style="display:flex;flex-direction:column;gap:8px"><div class="ff" style="font-size:17px">AI is off</div><p class="note" style="margin:0;color:inherit">${CFG.workerUrl ? 'Enter your passcode in Settings to turn on scanning and recipes.' : 'Scanning and recipes need the Fridge Worker set up (see the README).'} You can still log everything by hand.</p></div>${CFG.workerUrl ? `<button class="cta prime" data-act="settings">Open Settings</button>` : ''}<button class="cta ghost" data-act="add">${SVG.plus}Add by hand instead</button>`;
+      body += `<div class="card warm" style="display:flex;flex-direction:column;gap:8px"><div class="ff" style="font-size:17px">${IN_CLAUDE ? 'Claude is off' : 'AI is off'}</div><p class="note" style="margin:0;color:inherit">${aiOffMsg()} You can still log everything by hand.</p></div>${aiFixButton()}<button class="cta ghost" data-act="add">${SVG.plus}Add by hand instead</button>`;
     } else if (!sc.detected && (!st.canImage || sc.typing)) {
       body += `<p class="note" style="margin:0">${st.canImage ? 'Type what you bought.' : 'Type or dictate what you bought.'} Amounts are optional; I\'ll fill sensible ones.</p><div class="field">Groceries<textarea id="scan-text" placeholder="6 eggs, 2 salmon fillets, bag of spinach, cherry tomatoes, soy sauce…">${esc(sc.text || '')}</textarea></div>${st.err ? `<div class="err">${esc(st.err)}</div>` : ''}<button class="cta prime" data-act="runtext" ${st.busy === 'scan' ? 'disabled' : ''}>${st.busy === 'scan' ? 'Reading…' : 'Make the list'}</button>${st.canImage ? `<button class="cta ghost" data-act="rescan">${SVG.cam}Use a photo instead</button>` : ''}`;
     } else if (!sc.detected) {
       body += `<div class="scanbox">${sc.preview ? `<img src="${sc.preview}" alt="">` : ''}<svg class="corners" viewBox="0 0 346 300" fill="none" stroke="#FF7A45" stroke-width="4" stroke-linecap="round" preserveAspectRatio="none" aria-hidden="true"><path d="M28 60V40a12 12 0 0 1 12-12h20M286 28h20a12 12 0 0 1 12 12v20M318 240v20a12 12 0 0 1-12 12h-20M60 272H40a12 12 0 0 1-12-12v-20"/></svg>${st.busy === 'scan' ? '<div class="scanline"></div>' : ''}${!sc.preview ? `<div style="position:relative"><div class="ff" style="font-size:18px">Take a photo of what you bought</div><div class="sub" style="color:inherit;opacity:.7">Lay it out on the counter. Up to ${st.imgMax || 1} photo${(st.imgMax || 1) > 1 ? 's' : ''}.</div></div>` : (st.busy === 'scan' ? `<div class="ff" style="position:relative;font-size:18px;text-shadow:0 2px 8px #000">Looking…</div>` : '')}</div>`;
       body += `<label class="cta ghost" style="position:relative;overflow:hidden" for="photo">${SVG.cam}${sc.preview ? 'Choose different photo' : 'Take or choose photo'}</label><input id="photo" type="file" accept="${st.imgAccept || 'image/*'}" ${(st.imgMax || 1) > 1 ? 'multiple' : ''} capture="environment" class="sr">`;
+      if (DEMO) body += `<p class="note" style="margin:0">Demo: any photo returns the same sample groceries.</p>`;
       if (st.err) body += `<div class="err">${esc(st.err)}</div>`;
       body += `<button class="cta prime" data-act="runscan" ${sc.files.length && st.busy !== 'scan' ? '' : 'disabled'}>${st.busy === 'scan' ? 'Looking…' : 'Find ingredients'}</button><button class="cta ghost" data-act="typelist">Type a list instead</button>`;
     } else {
@@ -611,6 +848,13 @@ function sheetHtml() {
     <div class="field">Expiry date (optional, overrides)<input type="date" id="a-exp" value="${esc(a.exp)}"></div>
     ${st.err ? `<div class="err">${esc(st.err)}</div>` : ''}
     <button class="cta prime" data-act="addsave">${SVG.plus}Add to Fridge</button>`;
+  } else if (st.sheet === 'settings' && DEMO) {
+    body = `<h2>About this demo</h2><p class="note">This is a walkthrough of Fridge with a sample fridge. Scanning, list reading and recipe ideas use pre-written answers instead of Claude, so any photo gives the same sample groceries. Your changes stay in this browser only.</p>
+    <button class="cta prime" data-act="resetdemo">Reset the demo</button><a class="cta ghost" href="./">Open the real app</a>`;
+  } else if (st.sheet === 'settings' && IN_CLAUDE) {
+    body = `<h2>Household</h2><p class="note">${st.dbState === 'live' ? 'Your fridge and recipes are saved to this page. Everyone you share it with as a Contributor or Editor sees the same fridge and can change it, live.' : 'Shared saving is not available right now, so changes stay on this device.'}</p>
+    ${st.readOnly ? '<div class="err">You can look at this fridge but not change it. Ask the owner for Contributor access.</div>' : ''}
+    <p class="note">Scanning and recipe ideas use Claude on the account of whoever is using the page. The first time, Claude asks you to allow it.${st.ai ? '' : ' ' + esc(aiOffMsg())}</p>`;
   } else if (st.sheet === 'settings') {
     const on = remoteOn();
     body = `<h2>Settings</h2><p class="note">The passcode turns on sync between phones and AI scanning and recipes. It is stored on this phone only. Anyone with it can read your fridge list and use your AI budget, so share it only with your household.</p>
@@ -620,17 +864,18 @@ function sheetHtml() {
     ${on ? '<button class="cta ghost" data-act="forgetpass">Sign out on this phone</button>' : ''}
     ${CFG.workerUrl ? '' : '<p class="note">No Worker URL in config.js yet. The app works offline on this phone only.</p>'}`;
   } else if (st.sheet === 'import') {
-    body = `<h2>Add a recipe</h2><p class="note">Paste a recipe, a link, or an Instagram caption. Claude pulls out the ingredients and steps and matches them to your fridge.</p><div class="field">Text or link<textarea id="imp-text" placeholder="Paste here…"></textarea></div>${st.err ? `<div class="err">${esc(st.err)}</div>` : ''}<button class="cta prime" data-act="runimport" ${st.busy === 'import' ? 'disabled' : ''}>${st.busy === 'import' ? 'Reading…' : 'Save recipe'}</button>${st.ai ? '' : '<p class="note">Turn on AI in Settings to use this.</p>'}`;
+    body = `<h2>Add a recipe</h2><p class="note">Paste a recipe, a link, or an Instagram caption. Claude pulls out the ingredients and steps and matches them to your fridge.</p><div class="field">Text or link<textarea id="imp-text" placeholder="Paste here…"></textarea></div>${st.err ? `<div class="err">${esc(st.err)}</div>` : ''}<button class="cta prime" data-act="runimport" ${st.busy === 'import' ? 'disabled' : ''}>${st.busy === 'import' ? 'Reading…' : 'Save recipe'}</button>${st.ai ? '' : `<p class="note">${aiOffMsg()}</p>`}`;
   }
   return `<div class="sheetwrap" data-act="closesheet"><div class="sheet" role="dialog" aria-modal="true" data-stop="1"><div class="grab"></div>${body}</div></div>`;
 }
 
 // ───────────────────────── render ─────────────────────────
 const app = document.getElementById('app'), overlay = document.getElementById('overlay');
+function toastHtml() { return st.toast ? `<div class="toast" role="status"><svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="11" fill="#2FBF9B"/><path d="M7 12.5l3.5 3.5L17 9" stroke="#1E1714" stroke-width="2.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>${esc(st.toast)}</div>` : ''; }
+function viewFor() { return { fridge: viewFridge, craving: viewCraving, options: viewOptions, gen: viewGen, recipe: viewRecipe, recipes: viewRecipes }[st.screen] || viewFridge; }
 function render() {
-  const v = { fridge: viewFridge, craving: viewCraving, options: viewOptions, gen: viewGen, recipe: viewRecipe, recipes: viewRecipes }[st.screen] || viewFridge;
-  app.innerHTML = v();
-  overlay.innerHTML = sheetHtml() + (st.toast ? `<div class="toast" role="status"><svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="11" fill="#2FBF9B"/><path d="M7 12.5l3.5 3.5L17 9" stroke="#1E1714" stroke-width="2.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>${esc(st.toast)}</div>` : '');
+  app.innerHTML = (DEMO ? demoBar() : '') + viewFor()();
+  overlay.innerHTML = sheetHtml() + toastHtml();
 }
 
 // ───────────────────────── events ─────────────────────────
@@ -666,7 +911,7 @@ document.addEventListener('click', async e => {
     case 'more': generate(st.shown); return;
     case 'openopt': { const r = st.options && st.options[Number(el.dataset.i)]; if (!r) break; st.recipe = r; st.recipeBack = 'options'; st.screen = 'recipe'; break; }
     case 'swap': { const r = st.recipe; const from = item(el.dataset.from), to = item(el.dataset.to); const amt = Math.max(stepOf(to), Math.round((r.uses[from.id] / (from.max || r.uses[from.id])) * (to.max || to.qty) / stepOf(to)) * stepOf(to)); delete r.uses[from.id]; r.uses[to.id] = Math.min(to.qty, amt); toast(from.name + ' → ' + to.name); break; }
-    case 'saverecipe': { const r = st.recipe; const i = st.recipes.findIndex(x => x.id === r.id); if (i >= 0) { st.recipes.splice(i, 1); toast('Removed'); } else { st.recipes.unshift(Object.assign({}, r, { src: 'mine', ingredients: Object.keys(r.uses).map(k => ({ name: item(k).name, qty: r.uses[k], unit: item(k).unit, cat: item(k).cat })) })); toast('Saved to Recipes'); } persist('recipes'); break; }
+    case 'saverecipe': { const r = st.recipe; const i = st.recipes.findIndex(x => x.id === r.id); if (i >= 0) { st.recipes.splice(i, 1); toast('Removed'); } else { st.recipes.unshift(Object.assign({}, r, { src: 'mine', savedAt: Date.now(), ingredients: Object.keys(r.uses).map(k => ({ name: item(k).name, qty: r.uses[k], unit: item(k).unit, cat: item(k).cat })) })); toast('Saved to Recipes'); } persist('recipes'); break; }
     case 'accept': { const r = st.recipe; Object.keys(r.uses).forEach(k => { const it = item(k); if (it) setQty(k, it.qty - r.uses[k]); }); st.selected = {}; st.flavour = null; st.options = null; st.recipeBack = null; st.screen = 'fridge'; st.filter = 'all'; persist('items'); toast('Fridge updated'); break; }
     case 'rtab': st.rtab = id; break;
     case 'openrecipe': { const r = st.recipes.find(x => x.id === id); if (!r) break; st.recipe = Object.assign({}, r, { uses: usesFromSaved(r), servings: st.servings }); st.recipeBack = el.dataset.from || 'recipes'; st.screen = 'recipe'; break; }
@@ -692,6 +937,7 @@ document.addEventListener('click', async e => {
       catch (e) { lsSet(KEY, prev || null); st.err = 'Could not reach the Worker.'; }
       st.busy = null; break;
     }
+    case 'resetdemo': if (DEMO) { st.selected = {}; st.flavour = null; st.options = null; st.screen = 'fridge'; st.sheet = null; seedDemo(); toast('Demo reset'); } break;
     case 'forgetpass': lsSet(KEY, null); st.ai = null; st.syncState = null; st.sheet = null; toast('Signed out on this phone'); break;
     default: return;
   }
@@ -719,8 +965,11 @@ document.addEventListener('change', e => {
 document.addEventListener('keydown', e => { if (e.key === 'Escape' && st.sheet) { st.sheet = null; render(); } });
 
 // ───────────────────────── boot ─────────────────────────
-loadLocal(); render(); connectAi(); connectDb();
-if ('serviceWorker' in navigator) window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
+loadLocal();
+if (DEMO && lsGet(LS) == null) seedDemo();
+if (IN_CLAUDE && lsGet(LS) == null) st.loaded = false;
+render(); connectAi(); connectDb();
+if (!IN_CLAUDE && 'serviceWorker' in navigator) window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
 })();
 </script>
 </body>

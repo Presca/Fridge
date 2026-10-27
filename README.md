@@ -12,6 +12,16 @@ with, and get a quick recipe that uses up what's about to spoil.
   same food group.
 - **Recipes**: save generated recipes, or paste a recipe, link or Instagram caption.
 
+## Try it
+
+- **Demo:** https://presca.github.io/Fridge/?demo opens a sample fridge with simulated AI answers, so you can
+  try scanning, cooking and recipes without any setup. Demo data stays in your browser and never touches
+  the real app.
+- **As a Claude artifact:** the same app runs inside Claude with no Worker and no API key. AI uses the
+  Claude account of whoever is using it, and the fridge is shared with everyone you give Contributor access.
+  Build the page with `python3 tools/build-artifact.py fridge.html` and publish it as an artifact that
+  declares the `sample` (with images), `db` and `user` capabilities.
+
 ## What runs where
 
 | Piece | Hosted on | Cost |
