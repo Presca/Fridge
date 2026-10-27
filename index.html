@@ -120,9 +120,6 @@ nav.bar button.on{background:var(--tint-orange)}
 .rcard{display:flex;align-items:center;gap:12px;padding:12px}
 .rcard .thumb{width:64px;height:64px;border-radius:18px;display:grid;place-items:center;flex-shrink:0}
 .rcard .thumb .ic{width:48px;height:48px}
-.ring{position:relative;width:52px;height:52px;flex-shrink:0}
-.ring span{position:absolute;inset:0;display:grid;place-items:center;font-family:var(--display);font-weight:600;font-size:13px}
-.ring circle.v{transition:stroke-dashoffset .9s cubic-bezier(.34,1.3,.64,1)}
 .people{display:flex;gap:2px}
 .people svg{animation:pop .4s cubic-bezier(.34,1.56,.64,1) both}
 .crav{height:96px;border-radius:24px;background:var(--surface);display:flex;align-items:center;gap:12px;padding:0 14px;box-shadow:0 3px 0 var(--line);outline:3px solid transparent;outline-offset:-3px;text-align:left;font-family:var(--display);font-weight:600;font-size:17px;animation:pop .5s cubic-bezier(.34,1.56,.64,1) both}
@@ -867,10 +864,6 @@ function savedMatches() {
     .sort((a, b) => (b.hits - a.hits) || (b.pct - a.pct) || ((st.flavour && b.r.flavour === st.flavour) - (st.flavour && a.r.flavour === st.flavour)))
     .slice(0, 3);
 }
-function ringHtml(pct) {
-  const dash = Math.round(132 - 132 * pct / 100); const col = pct === 100 ? 'var(--mint)' : pct >= 60 ? 'var(--sun)' : '#FF6A8E';
-  return `<div class="ring"><svg width="52" height="52" viewBox="0 0 52 52" aria-hidden="true"><circle cx="26" cy="26" r="21" fill="none" stroke="var(--sunk)" stroke-width="6"/><circle class="v" cx="26" cy="26" r="21" fill="none" stroke="${col}" stroke-width="6" stroke-linecap="round" stroke-dasharray="132" stroke-dashoffset="${dash}" transform="rotate(-90 26 26)"/></svg><span>${pct}%</span></div>`;
-}
 
 // ───────────────────────── UI helpers ─────────────────────────
 let toastT = null;
@@ -942,12 +935,10 @@ function viewCraving() {
   h += hungerHtml();
   h += `<div class="card row" style="margin-top:12px"><div class="people">${Array.from({ length: 6 }, (_, k) => SVG.person(k < st.servings ? '#FFC53D' : 'var(--sunk)')).join('')}</div><span class="ff" style="font-size:17px">${st.servings} ${st.servings === 1 ? 'person' : 'people'}</span><div class="row" style="margin-left:auto;gap:6px"><button class="round" style="width:40px;height:40px;background:var(--tint-orange);box-shadow:none" data-act="people" data-d="-1" aria-label="Fewer people">${SVG.minus}</button><button class="round" style="width:40px;height:40px;background:var(--tint-mint);box-shadow:none" data-act="people" data-d="1" aria-label="More people">${SVG.plusS}</button></div></div>`;
   h += `<div style="margin-top:20px"><div class="row" style="margin-bottom:10px">${SVG.clock}<span class="ff" style="font-size:17px">Time I have</span><span class="sub" style="margin-left:auto;font-size:14px">${st.time} min</span></div><div class="row" style="gap:8px">${TIMES.map(t => `<button class="timec ${st.time === t ? 'on' : ''}" data-act="time" data-t="${t}">${t} min</button>`).join('')}</div></div>`;
-  const saved = savedMatches();
-  if (saved.length) h += `<div style="margin-top:22px"><div class="row" style="margin-bottom:10px">${SVG.book}<span class="ff" style="font-size:17px">From your recipes</span></div><div style="display:flex;flex-direction:column;gap:10px">${saved.map(({ r, pct }, i) => `<div class="card rcard" style="animation:rise .4s both;animation-delay:${i * 40}ms"><div class="thumb" style="background:${HERO_BG[r.hero] || '#FFF4DD'}">${icon(r.hero)}</div><div style="flex:1;min-width:0"><div class="ff" style="font-size:16px;line-height:1.1">${esc(r.name)}</div><div class="row" style="gap:6px;margin-top:6px;font-size:12px;color:var(--muted)">${SVG.clock}${r.time} min</div></div>${ringHtml(pct)}<button class="round accent" style="width:44px;height:44px" data-act="openrecipe" data-id="${r.id}" data-from="craving" aria-label="Open ${esc(r.name)}">${SVG.arrow}</button></div>`).join('')}</div></div>`;
   h += `<div style="height:${st.ai ? 90 : 170}px"></div>`;
   h += st.ai
     ? `<div class="stack"><button class="cta prime pulse" data-act="cook">${SVG.flame.replace('width="16" height="16"', 'width="24" height="24"').replace('fill="#FF7A45"', 'fill="#2A1F1A"')}Show me recipes</button></div>`
-    : `<div class="stack"><div class="card warm"><div class="ff" style="font-size:16px">New recipe ideas need AI</div><p class="note" style="margin:4px 0 0;color:inherit">${aiOffMsg()}${saved.length ? ' Your saved recipes above still work.' : ''}</p></div>${aiFixButton()}</div>`;
+    : `<div class="stack"><div class="card warm"><div class="ff" style="font-size:16px">New recipe ideas need AI</div><p class="note" style="margin:4px 0 0;color:inherit">${aiOffMsg()}</p></div>${aiFixButton()}</div>`;
   return h + nav(st.cravingBack || 'fridge');
 }
 function viewOptions() {
@@ -955,6 +946,8 @@ function viewOptions() {
   let h = `<div class="head"><div class="hl"><button class="round" data-act="go" data-to="craving" aria-label="Back">${SVG.back}</button><h1>Pick one</h1></div></div>`;
   if (st.err) h += `<div class="err" style="margin-bottom:12px">${esc(st.err)}</div>`;
   h += `<div style="display:flex;flex-direction:column;gap:12px">${st.options.map((r, i) => { const its = Object.keys(r.uses).map(item).filter(Boolean); const sv = st.recipes.some(x => x.id === r.id); return `<div class="card rcard optcard" style="animation:pop .5s cubic-bezier(.34,1.56,.64,1) both;animation-delay:${i * 90}ms"><button class="optmain" data-act="openopt" data-i="${i}" aria-label="Open ${esc(r.name)}"><div class="thumb" style="background:${HERO_BG[r.hero] || '#FFF4DD'}">${icon(r.hero)}</div><div style="flex:1;min-width:0"><div class="ff" style="font-size:17px;line-height:1.15">${esc(r.name)}</div><div class="row" style="gap:6px;margin-top:6px;font-size:12px;color:var(--muted)">${SVG.clock}${r.time} min · ${esc(FLAV.find(f => f.id === r.flavour)?.label || 'Tasty')}</div><div class="row" style="gap:2px;margin-top:6px">${its.slice(0, 5).map(it => icon(iconOf(it), 'ic').replace('class="ic"', 'style="width:26px;height:26px"')).join('')}${its.length > 5 ? `<span class="sub">+${its.length - 5}</span>` : ''}</div></div></button><div class="optside"><button class="round ${sv ? 'saved' : ''}" style="width:44px;height:44px" data-act="saveopt" data-i="${i}" aria-pressed="${sv}" aria-label="${sv ? 'Remove from Saved' : 'Save recipe'}">${SVG.save(sv)}</button><span class="sub">${sv ? 'Saved' : 'Save'}</span></div></div>`; }).join('')}</div>`;
+  const saved = savedMatches();
+  if (saved.length) h += `<div style="margin-top:22px"><div class="row" style="margin-bottom:10px">${SVG.book}<span class="ff" style="font-size:17px">From your recipes</span></div><div style="display:flex;flex-direction:column;gap:10px">${saved.map(({ r }, i) => `<div class="card rcard" style="animation:rise .4s both;animation-delay:${i * 40}ms"><div class="thumb" style="background:${HERO_BG[r.hero] || '#FFF4DD'}">${icon(r.hero)}</div><div style="flex:1;min-width:0"><div class="ff" style="font-size:16px;line-height:1.1">${esc(r.name)}</div><div class="row" style="gap:6px;margin-top:6px;font-size:12px;color:var(--muted)">${SVG.clock}${r.time} min</div></div><button class="round accent" style="width:44px;height:44px" data-act="openrecipe" data-id="${r.id}" data-from="options" aria-label="Open ${esc(r.name)}">${SVG.arrow}</button></div>`).join('')}</div></div>`;
   h += `<div style="height:90px"></div>`;
   h += `<div class="stack plain"><button class="cta ghost" data-act="more">${icon('dice', 'ic').replace('class="ic"', 'style="width:30px;height:30px"')}More ideas</button></div>`;
   return h;
