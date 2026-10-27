@@ -23,14 +23,14 @@
   --bg:#FFF6E9; --surface:#FFFFFF; --ink:#2A1F1A; --muted:#7A6A60; --line:#F0DFC8; --sunk:#F3EADF;
   --accent:#FF7A45; --accent-deep:#D85A28; --mint:#2FBF9B; --mint-deep:#1F8F74; --sun:#FFC53D;
   --tint-orange:#FFE4D2; --tint-mint:#D7F5EC; --tint-pink:#FFE4EB; --pink-ink:#B3123C; --dark:#2A1F1A; --on-dark:#FFF6E9;
-  --display:'Fredoka',system-ui,sans-serif; --body:'Nunito',system-ui,sans-serif;
+  --wood:#F6D7AE; --wood-deep:#E5BC86; --display:'Fredoka',system-ui,sans-serif; --body:'Nunito',system-ui,sans-serif;
 }
 @media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
   --bg:#1E1714; --surface:#2B221E; --ink:#FFF1E2; --muted:#B9A595; --line:#3A2E28; --sunk:#352A25;
-  --tint-orange:#4A2C1E; --tint-mint:#1E3D35; --tint-pink:#4A2230; --pink-ink:#FFB3C6; --dark:#FFF6E9; --on-dark:#2A1F1A; color-scheme:dark } }
+  --tint-orange:#4A2C1E; --tint-mint:#1E3D35; --tint-pink:#4A2230; --pink-ink:#FFB3C6; --dark:#FFF6E9; --on-dark:#2A1F1A; --wood:#5A3E2B; --wood-deep:#46301F; color-scheme:dark } }
 :root[data-theme="dark"]{
   --bg:#1E1714; --surface:#2B221E; --ink:#FFF1E2; --muted:#B9A595; --line:#3A2E28; --sunk:#352A25;
-  --tint-orange:#4A2C1E; --tint-mint:#1E3D35; --tint-pink:#4A2230; --pink-ink:#FFB3C6; --dark:#FFF6E9; --on-dark:#2A1F1A; color-scheme:dark }
+  --tint-orange:#4A2C1E; --tint-mint:#1E3D35; --tint-pink:#4A2230; --pink-ink:#FFB3C6; --dark:#FFF6E9; --on-dark:#2A1F1A; --wood:#5A3E2B; --wood-deep:#46301F; color-scheme:dark }
 html,body{height:100%}
 [hidden]{display:none!important}
 img{max-width:100%}
@@ -159,6 +159,45 @@ nav.bar button.on{background:var(--tint-orange)}
 @keyframes toast{0%{transform:translate(-50%,40px);opacity:0}12%{transform:translate(-50%,0);opacity:1}80%{transform:translate(-50%,0);opacity:1}100%{transform:translate(-50%,20px);opacity:0}}
 @keyframes spark{0%,100%{transform:scale(.6) rotate(0);opacity:.3}50%{transform:scale(1.1) rotate(20deg);opacity:1}}
 .spark{animation:spark 1.4s ease-in-out infinite}
+.calm .tile:not(.edit),.calm .crav,.calm .rcard,.calm .people svg{animation:none}
+.cookscene{position:relative;height:380px;margin-top:10px}
+.board{position:absolute;top:10px;left:4%;right:4%;height:92px;border-radius:24px;background:var(--wood);box-shadow:inset 0 -5px 0 var(--wood-deep)}
+.ing{position:absolute;top:28px;left:calc(var(--p) * 100%);width:56px;height:56px;margin-left:-28px;z-index:2;animation:fly .62s cubic-bezier(.45,0,.65,1) var(--fly) forwards}
+.ing-in{position:absolute;inset:0;animation:pop .4s cubic-bezier(.34,1.56,.64,1) var(--in) both}
+.ing .half{position:absolute;inset:0;animation:.22s ease-out var(--cut) forwards}
+.ing .half .ic{width:56px;height:56px;display:block}
+.ing .half.l{clip-path:inset(0 50% 0 0);animation-name:cutL}.ing .half.r{clip-path:inset(0 0 0 50%);animation-name:cutR}
+@keyframes cutL{to{transform:translate(-6px,2px) rotate(-10deg)}}@keyframes cutR{to{transform:translate(6px,2px) rotate(10deg)}}
+@keyframes fly{0%{left:calc(var(--p) * 100%);top:28px;opacity:1}45%{left:calc((var(--p) + .5) / 2 * 100%);top:-6px;transform:rotate(160deg)}100%{left:50%;top:214px;transform:rotate(380deg) scale(.4);opacity:0}}
+.knife{position:absolute;top:-22px;left:calc(12% - 20px);z-index:3;opacity:0;animation:knifeGo var(--kdur) linear var(--knife) both}
+.knife svg{display:block;animation:chop .09s ease-in-out infinite alternate}
+@keyframes knifeGo{0%{left:calc(12% - 20px);opacity:1}100%{left:calc(88% - 20px);opacity:1}}
+@keyframes chop{from{transform:translateY(-6px) rotate(-6deg)}to{transform:translateY(16px) rotate(0)}}
+.cookscene .knife{animation:knifeGo var(--kdur) linear var(--knife) both,knifeOut .2s linear calc(var(--knife) + var(--kdur)) forwards}
+@keyframes knifeOut{to{opacity:0;transform:translateY(-20px)}}
+.wokwrap{position:absolute;left:50%;top:200px;width:236px;margin-left:-104px;height:96px;z-index:1;transform-origin:44% 70%;animation:toss .42s ease-in-out var(--toss) 8 alternate}
+.wok{width:236px;height:auto;display:block}
+.wok .food{opacity:0;animation:pop .3s ease-out var(--toss) forwards}
+@keyframes toss{from{transform:rotate(-4deg) translateY(0)}to{transform:rotate(5deg) translateY(-8px)}}
+.bit{position:absolute;top:14px;width:9px;height:9px;border-radius:50%;opacity:0;animation:hop .5s ease-out var(--b) 7 alternate}
+@keyframes hop{0%{transform:translateY(0);opacity:1}100%{transform:translateY(-30px);opacity:1}}
+.fire{position:absolute;left:50%;top:296px;width:200px;margin-left:-100px;height:60px}
+.flame{position:absolute;bottom:0;width:30px;height:46px;margin-left:-15px;transform-origin:50% 100%;animation:flick .28s ease-in-out var(--f) infinite alternate}
+@keyframes flick{from{transform:scaleY(.82) scaleX(1.05)}to{transform:scaleY(1.12) scaleX(.94)}}
+.cookedhead{display:flex;align-items:center;gap:14px;padding-top:10px}
+.plate{width:84px;height:84px;border-radius:28px;display:grid;place-items:center;flex-shrink:0;animation:pop .5s cubic-bezier(.34,1.56,.64,1) both}
+.plate .ic{width:62px;height:62px;animation:float 2.6s ease-in-out infinite}
+.userow{display:flex;align-items:center;gap:12px;padding:12px;animation:rise .4s both;animation-delay:calc(var(--i) * 70ms)}
+.uicon{width:52px;height:52px;border-radius:16px;display:grid;place-items:center;flex-shrink:0}.uicon .ic{width:40px;height:40px}
+.umid{flex:1;min-width:0;display:flex;flex-direction:column;gap:6px}
+.userow .tag{font-family:var(--display);font-weight:600;font-size:13px;padding:2px 9px;border-radius:9px;background:var(--tint-pink);color:var(--pink-ink);flex-shrink:0}
+.userow .tag.gone{background:var(--sunk);color:var(--muted)}
+.ubar{height:10px;border-radius:5px;background:var(--sunk);overflow:hidden}
+.ubar span{display:block;height:100%;border-radius:5px;background:var(--c);animation:shrink 1s cubic-bezier(.3,.7,.3,1) both;animation-delay:calc(.45s + var(--i) * 90ms)}
+@keyframes shrink{from{width:var(--from)}to{width:var(--to)}}
+.homebtn{position:relative;overflow:hidden}
+.homebtn .prog{position:absolute;left:0;bottom:0;height:4px;background:var(--accent-deep);animation:prog 6.5s linear both}
+@keyframes prog{from{width:0}to{width:100%}}
 @media (prefers-reduced-motion: reduce){*{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
 </style>
 
@@ -522,22 +561,24 @@ async function connectClaude() {
 }
 let cdb = null, prefsSynced = null, syncing = false, syncAgain = false;
 const synced = { items: new Map(), recipes: new Map() }, dbReady = { items: false, recipes: false };
-function softRender() { if (st.sheet) app.innerHTML = (DEMO ? demoBar() : '') + viewFor()(); else render(); }
+function softRender() { if (st.screen === 'cooking' || st.screen === 'cooked') return; if (st.sheet) { app.classList.add('calm'); app.innerHTML = (DEMO ? demoBar() : '') + viewFor()(); } else render(); }
 async function connectClaudeDb() {
   cdb = await window.claude.use('db').catch(() => null);
   if (!cdb) { st.dbState = 'off'; st.loaded = true; render(); return; }
   window.claude.use('user').then(u => u && u.can('data.write')).then(ok => { if (ok === false) { st.readOnly = true; render(); } }).catch(() => {});
   const listen = (col, apply) => cdb.collection(col).onSnapshot(snap => {
     const list = snap.docs.map(d => Object.assign({}, d.data()));
+    const before = JSON.stringify(col === 'items' ? st.items : st.recipes);
     apply(list);
+    const same = before === JSON.stringify(col === 'items' ? st.items : st.recipes);
     synced[col] = new Map(list.map(x => [x.id, JSON.stringify(x)]));
     if (!snap.metadata.fromCache) dbReady[col] = true;
     if (dbReady.items && dbReady.recipes) { st.loaded = true; st.dbState = 'live'; }
-    cacheLocal(); softRender();
+    cacheLocal(); if (!same || !st.loaded) softRender(); else if (st.loaded && !app.querySelector('.tile, .empty h2')) softRender();
   }, () => { st.dbState = 'off'; st.loaded = true; render(); });
   listen('items', list => { st.items = list.sort((a, b) => ((a.ord || 0) - (b.ord || 0)) || String(a.id).localeCompare(b.id)); Object.keys(st.selected).forEach(k => { if (!item(k)) delete st.selected[k]; }); });
   listen('recipes', list => { st.recipes = list.sort((a, b) => (b.savedAt || 0) - (a.savedAt || 0)); });
-  cdb.doc('prefs/household').onSnapshot(s => { if (s.exists) { const v = Number(s.data().servings); if (v >= 1 && v <= 6) { st.servings = v; prefsSynced = v; softRender(); } } }, () => {});
+  cdb.doc('prefs/household').onSnapshot(s => { if (s.exists) { const v = Number(s.data().servings); if (v >= 1 && v <= 6) { prefsSynced = v; if (v !== st.servings) { st.servings = v; softRender(); } } } }, () => {});
 }
 async function syncDb() {
   if (!cdb || st.readOnly || !dbReady.items || !dbReady.recipes) return;
@@ -735,12 +776,17 @@ function viewFridge() {
       if (fin) return `<div class="tile fin" ${d}>${ik}<span class="nm" style="color:var(--muted)">${esc(i.name)}</span><button class="small" data-act="restock" data-id="${i.id}">${SVG.plusS}Restock</button></div>`;
       if (edit) return `<div class="tile edit" ${d}>${pillFor(i)}<button class="round" style="position:absolute;top:6px;right:6px;width:28px;height:28px;box-shadow:none;background:var(--tint-pink);color:var(--pink-ink)" data-act="remove" data-id="${i.id}" aria-label="Remove ${esc(i.name)}">${SVG.x}</button>${ik}<span class="nm">${esc(i.name)}</span><div class="step"><button class="m" data-act="dec" data-id="${i.id}" aria-label="Less ${esc(i.name)}">${SVG.minus}</button><span>${qtyLabel(i)}</span><button class="p" data-act="inc" data-id="${i.id}" aria-label="More ${esc(i.name)}">${SVG.plusS}</button></div></div>`;
       const on = !!st.selected[i.id];
-      return `<button class="tile ${on ? 'sel' : ''}" ${d} data-act="pick" data-id="${i.id}" aria-pressed="${on}" aria-label="${esc(i.name)}, ${qtyLabel(i)} (hold to edit)">${pillFor(i)}${on ? `<svg class="chk" width="28" height="28" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="11" fill="#FF7A45" stroke="#FFF6E9" stroke-width="2"/><path d="M7 12.5l3.5 3.5L17 9" stroke="#2A1F1A" stroke-width="2.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>` : ''}${ik}<span class="nm">${esc(i.name)}</span><span class="qt">${qtyLabel(i)}</span></button>`;
+      return `<button class="tile ${on ? 'sel' : ''}" ${d} data-act="pick" data-id="${i.id}" aria-pressed="${on}" aria-label="${esc(i.name)}, ${qtyLabel(i)} (hold to edit)">${pillFor(i)}${on ? `${CHK_SVG}` : ''}${ik}<span class="nm">${esc(i.name)}</span><span class="qt">${qtyLabel(i)}</span></button>`;
     }).join('') + `</div>`;
   }
-  // bottom stack: gaps + CTA
+  const stack = fridgeStack();
+  return h + (stack ? `<div class="stack">${stack}</div>` : '') + nav('fridge');
+}
+// Bottom of the fridge screen: missing food groups + the Cook button.
+function fridgeStack() {
   let stack = '';
-  if (!edit && !fin && st.items.length) {
+  if (st.mode !== 'edit' && st.filter !== 'finished' && st.items.length) {
+    const sel = selIds();
     const haveCats = sel.map(id => catOf(item(id).cat));
     const missing = sel.length ? ['protein', 'carbs', 'fibre'].filter(c => !haveCats.includes(c)) : [];
     const gapItems = [];
@@ -750,7 +796,7 @@ function viewFridge() {
       ? `<button class="cta ink" data-act="craving">${SVG.flame.replace('width="16" height="16"', 'width="24" height="24"')}Cook<span class="num">${sel.length}</span>${SVG.arrow}</button>`
       : `<button class="cta ink" data-act="craving">${icon('dice', 'ic').replace('class="ic"', 'style="width:30px;height:30px"')}Surprise me${SVG.arrow}</button>`;
   }
-  return h + (stack ? `<div class="stack">${stack}</div>` : '') + nav('fridge');
+  return stack;
 }
 function viewCraving() {
   let h = `<div class="head"><div class="hl"><button class="round" data-act="go" data-to="fridge" aria-label="Back">${SVG.back}</button><h1>Craving?</h1></div></div>`;
@@ -778,6 +824,51 @@ function viewOptions() {
   h += `<div style="height:90px"></div>`;
   h += `<div class="stack plain"><button class="cta ghost" data-act="more">${icon('dice', 'ic').replace('class="ic"', 'style="width:30px;height:30px"')}More ideas</button></div>`;
   return h;
+}
+// ───────────────────────── cooking moment ─────────────────────────
+let cookT = null;
+const REDUCED = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
+function startCooking() {
+  const r = st.recipe; if (!r) return;
+  const rows = Object.keys(r.uses).map(k => { const it = item(k); if (!it) return null; const used = Math.min(it.qty, r.uses[k]); return { id: k, name: it.name, icon: iconOf(it), cat: catOf(it.cat), unit: it.unit, before: it.qty, after: Math.max(0, Math.round((it.qty - used) * 10) / 10), base: Math.max(it.max || 0, it.qty) }; }).filter(Boolean);
+  rows.forEach(x => setQty(x.id, x.after));
+  st.cookLog = { name: r.name, hero: r.hero, rows };
+  st.selected = {}; st.flavour = null; st.options = null; st.recipeBack = null; st.filter = 'all'; st.mode = 'select';
+  persist('items');
+  st.screen = 'cooking'; render(); window.scrollTo(0, 0);
+  const n = Math.min(6, rows.length);
+  clearTimeout(cookT); cookT = setTimeout(showCooked, REDUCED() ? 600 : (0.7 + n * 0.18 + (n - 1) * 0.16 + 1.9) * 1000);
+}
+function showCooked() { clearTimeout(cookT); if (!st.cookLog) return goHome(); st.screen = 'cooked'; render(); window.scrollTo(0, 0); cookT = setTimeout(goHome, REDUCED() ? 4000 : 6500); }
+function goHome() { clearTimeout(cookT); st.cookLog = null; st.screen = 'fridge'; render(); window.scrollTo(0, 0); }
+const fmtQ = (q, u) => (Number.isInteger(q) ? q : q.toFixed(1)) + ' ' + u;
+function viewCooking() {
+  const L = st.cookLog; const rows = L.rows.slice(0, 6); const n = Math.max(1, rows.length);
+  const t = { knife: 0.5, knifeDur: n * 0.18, fly: 0.7 + n * 0.18 };
+  const toss = t.fly + 0.45;
+  const ings = rows.map((x, i) => { const pos = 0.12 + 0.76 * (i + 0.5) / n; const svg = icon(x.icon, 'ic');
+    return `<div class="ing" style="--p:${pos.toFixed(3)};--fly:${(t.fly + i * 0.16).toFixed(2)}s"><div class="ing-in" style="--in:${(0.1 + i * 0.12).toFixed(2)}s"><span class="half l" style="--cut:${(t.knife + (i + 0.5) * 0.18).toFixed(2)}s">${svg}</span><span class="half r" style="--cut:${(t.knife + (i + 0.5) * 0.18).toFixed(2)}s">${svg}</span></div></div>`; }).join('');
+  const bits = rows.concat(rows).slice(0, 8).map((x, i) => `<span class="bit" style="left:${18 + (i * 64 / 8) + (i % 2) * 4}%;background:${CATS[x.cat].color};--b:${(toss + (i % 4) * 0.12).toFixed(2)}s"></span>`).join('');
+  const flames = [0, 1, 2, 3, 4].map(i => `<svg class="flame" style="left:${22 + i * 14}%;--f:${(i * 0.13).toFixed(2)}s" viewBox="0 0 24 36" aria-hidden="true"><path d="M12 1c3 7 10 11 10 21a10 10 0 0 1-20 0C2 14 8 10 12 1z" fill="#FF7A45"/><path d="M12 13c2 4 5 6 5 11a5 5 0 0 1-10 0c0-4 3-6 5-11z" fill="#FFC53D"/></svg>`).join('');
+  return `<div class="head"><div class="hl"><h1>Cooking</h1></div><button class="small" style="height:40px;border-radius:20px;padding:0 16px;background:var(--surface);box-shadow:0 3px 0 var(--line);color:var(--ink)" data-act="cookskip">Skip</button></div>
+  <div class="sub" style="font-size:15px;white-space:normal">${esc(L.name)}</div>
+  <div class="cookscene" style="--knife:${t.knife}s;--kdur:${t.knifeDur.toFixed(2)}s;--toss:${toss.toFixed(2)}s" aria-hidden="true">
+    <div class="board"></div>${ings}
+    <div class="knife"><svg viewBox="0 0 40 64" width="40" height="64"><rect x="15" y="0" width="10" height="22" rx="4" fill="#8A5A3B" stroke="#2A1F1A" stroke-width="2.5"/><path d="M10 22h20v26c0 8-6 14-10 14S10 56 10 48z" fill="#E7EEF2" stroke="#2A1F1A" stroke-width="2.5" stroke-linejoin="round"/></svg></div>
+    <div class="wokwrap"><span class="steam" style="left:38%;top:-30px;animation-delay:var(--toss)"></span><span class="steam" style="left:52%;top:-40px;animation-delay:calc(var(--toss) + .4s)"></span><span class="steam" style="left:64%;top:-28px;animation-delay:calc(var(--toss) + .8s)"></span>${bits}
+      <svg class="wok" viewBox="0 0 260 96" aria-hidden="true"><path d="M206 28h46a6 6 0 0 1 0 12h-46z" fill="#8A5A3B" stroke="var(--ink)" stroke-width="3"/><path d="M14 26h192c0 38-42 62-96 62S14 64 14 26z" fill="#3A2E28" stroke="var(--ink)" stroke-width="3" stroke-linejoin="round"/><ellipse cx="110" cy="26" rx="96" ry="9" fill="#5A4A40" stroke="var(--ink)" stroke-width="3"/><ellipse class="food" cx="110" cy="27" rx="70" ry="6" fill="#FFB061"/></svg>
+    </div>
+    <div class="fire">${flames}</div>
+  </div>`;
+}
+function viewCooked() {
+  const L = st.cookLog;
+  const rows = L.rows.map((x, i) => { const from = Math.round(x.before / (x.base || 1) * 100), to = Math.round(x.after / (x.base || 1) * 100); const used = Math.round((x.before - x.after) * 10) / 10;
+    return `<div class="card userow" style="--i:${i};--from:${from}%;--to:${to}%;--c:${CATS[x.cat].color}"><div class="uicon" style="background:${CATS[x.cat].bg}">${icon(x.icon)}</div><div class="umid"><div class="row" style="gap:8px;justify-content:space-between"><span class="ff" style="font-size:16px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(x.name)}</span><span class="tag ${x.after <= 0 ? 'gone' : ''}">${x.after <= 0 ? 'Finished' : '−' + fmtQ(used, x.unit)}</span></div><div class="ubar"><span></span></div><div class="sub">${fmtQ(x.before, x.unit)} → ${fmtQ(x.after, x.unit)} left</div></div></div>`; }).join('');
+  return `<div class="cookedhead"><div class="plate" style="background:${HERO_BG[L.hero] || '#FFF4DD'}">${icon(L.hero)}</div><div><h1>Cooked!</h1><div class="sub" style="font-size:15px;white-space:normal;margin-top:4px">${esc(L.name)} · here's what it used</div></div></div>
+  <div style="display:flex;flex-direction:column;gap:10px;margin-top:16px">${rows}</div>
+  <div style="height:90px"></div>
+  <div class="stack plain"><button class="cta prime homebtn" data-act="cookdone"><span class="prog"></span>${SVG.fridge}Back to fridge</button></div>`;
 }
 function viewGen() {
   return `<div class="gen"><div class="pot"><span class="steam" style="left:50px;top:10px"></span><span class="steam" style="left:76px;top:2px;animation-delay:.5s"></span><span class="steam" style="left:100px;top:12px;animation-delay:1s"></span>
@@ -872,10 +963,29 @@ function sheetHtml() {
 // ───────────────────────── render ─────────────────────────
 const app = document.getElementById('app'), overlay = document.getElementById('overlay');
 function toastHtml() { return st.toast ? `<div class="toast" role="status"><svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="11" fill="#2FBF9B"/><path d="M7 12.5l3.5 3.5L17 9" stroke="#1E1714" stroke-width="2.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>${esc(st.toast)}</div>` : ''; }
-function viewFor() { return { fridge: viewFridge, craving: viewCraving, options: viewOptions, gen: viewGen, recipe: viewRecipe, recipes: viewRecipes }[st.screen] || viewFridge; }
+function viewFor() { return { fridge: viewFridge, craving: viewCraving, options: viewOptions, cooking: viewCooking, cooked: viewCooked, gen: viewGen, recipe: viewRecipe, recipes: viewRecipes }[st.screen] || viewFridge; }
+let lastScreen = null;
 function render() {
+  app.classList.toggle('calm', st.screen === lastScreen); lastScreen = st.screen;
   app.innerHTML = (DEMO ? demoBar() : '') + viewFor()();
   overlay.innerHTML = sheetHtml() + toastHtml();
+}
+
+const CHK_SVG = '<svg class="chk" width="28" height="28" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="11" fill="#FF7A45" stroke="#FFF6E9" stroke-width="2"/><path d="M7 12.5l3.5 3.5L17 9" stroke="#2A1F1A" stroke-width="2.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+// Picking a tile changes only that tile and the bottom stack, so the grid stays still.
+function patchPick(id) {
+  if (st.screen !== 'fridge') { render(); return; }
+  const on = !!st.selected[id];
+  const t = app.querySelector(`.tile[data-act="pick"][data-id="${CSS.escape(id)}"]`);
+  if (t) {
+    t.classList.toggle('sel', on); t.setAttribute('aria-pressed', String(on));
+    const c = t.querySelector('.chk'); if (c) c.remove();
+    if (on) t.insertAdjacentHTML('afterbegin', CHK_SVG);
+  }
+  const html = fridgeStack(); let el = app.querySelector('.stack');
+  if (!html) { if (el) el.remove(); return; }
+  if (!el) { app.querySelector('nav.bar').insertAdjacentHTML('beforebegin', '<div class="stack"></div>'); el = app.querySelector('.stack'); }
+  el.innerHTML = html;
 }
 
 // ───────────────────────── events ─────────────────────────
@@ -895,7 +1005,7 @@ document.addEventListener('click', async e => {
   const act = el.dataset.act, id = el.dataset.id;
   switch (act) {
     case 'filter': st.filter = id; break;
-    case 'pick': if (held) { held = false; return; } st.selected[id] = !st.selected[id]; break;
+    case 'pick': if (held) { held = false; return; } st.selected[id] = !st.selected[id]; patchPick(id); return;
     case 'inc': { const it = item(id); if (it.qty === 0) it.addedAt = Date.now(); setQty(id, it.qty + stepOf(it)); it.max = Math.max(it.max || 0, it.qty); break; }
     case 'dec': { const it = item(id); setQty(id, it.qty - stepOf(it)); break; }
     case 'restock': { const it = item(id); it.qty = it.max || stepOf(it); it.addedAt = Date.now(); it.exp = null; persist('items'); toast(it.name + ' restocked'); break; }
@@ -912,7 +1022,9 @@ document.addEventListener('click', async e => {
     case 'openopt': { const r = st.options && st.options[Number(el.dataset.i)]; if (!r) break; st.recipe = r; st.recipeBack = 'options'; st.screen = 'recipe'; break; }
     case 'swap': { const r = st.recipe; const from = item(el.dataset.from), to = item(el.dataset.to); const amt = Math.max(stepOf(to), Math.round((r.uses[from.id] / (from.max || r.uses[from.id])) * (to.max || to.qty) / stepOf(to)) * stepOf(to)); delete r.uses[from.id]; r.uses[to.id] = Math.min(to.qty, amt); toast(from.name + ' → ' + to.name); break; }
     case 'saverecipe': { const r = st.recipe; const i = st.recipes.findIndex(x => x.id === r.id); if (i >= 0) { st.recipes.splice(i, 1); toast('Removed'); } else { st.recipes.unshift(Object.assign({}, r, { src: 'mine', savedAt: Date.now(), ingredients: Object.keys(r.uses).map(k => ({ name: item(k).name, qty: r.uses[k], unit: item(k).unit, cat: item(k).cat })) })); toast('Saved to Recipes'); } persist('recipes'); break; }
-    case 'accept': { const r = st.recipe; Object.keys(r.uses).forEach(k => { const it = item(k); if (it) setQty(k, it.qty - r.uses[k]); }); st.selected = {}; st.flavour = null; st.options = null; st.recipeBack = null; st.screen = 'fridge'; st.filter = 'all'; persist('items'); toast('Fridge updated'); break; }
+    case 'accept': startCooking(); return;
+    case 'cookskip': if (st.screen === 'cooking') showCooked(); return;
+    case 'cookdone': goHome(); return;
     case 'rtab': st.rtab = id; break;
     case 'openrecipe': { const r = st.recipes.find(x => x.id === id); if (!r) break; st.recipe = Object.assign({}, r, { uses: usesFromSaved(r), servings: st.servings }); st.recipeBack = el.dataset.from || 'recipes'; st.screen = 'recipe'; break; }
     case 'scan': st.sheet = 'scan'; st.scan = { files: [], preview: null, detected: null }; st.err = null; break;
