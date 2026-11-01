@@ -120,9 +120,6 @@ nav.bar button.on{background:var(--tint-orange)}
 .rcard{display:flex;align-items:center;gap:12px;padding:12px}
 .rcard .thumb{width:64px;height:64px;border-radius:18px;display:grid;place-items:center;flex-shrink:0}
 .rcard .thumb .ic{width:48px;height:48px}
-.ring{position:relative;width:52px;height:52px;flex-shrink:0}
-.ring span{position:absolute;inset:0;display:grid;place-items:center;font-family:var(--display);font-weight:600;font-size:13px}
-.ring circle.v{transition:stroke-dashoffset .9s cubic-bezier(.34,1.3,.64,1)}
 .people{display:flex;gap:2px}
 .people svg{animation:pop .4s cubic-bezier(.34,1.56,.64,1) both}
 .crav{height:96px;border-radius:24px;background:var(--surface);display:flex;align-items:center;gap:12px;padding:0 14px;box-shadow:0 3px 0 var(--line);outline:3px solid transparent;outline-offset:-3px;text-align:left;font-family:var(--display);font-weight:600;font-size:17px;animation:pop .5s cubic-bezier(.34,1.56,.64,1) both}
@@ -201,6 +198,9 @@ nav.bar button.on{background:var(--tint-orange)}
 .hcard{padding:12px;display:flex;flex-direction:column}
 .hcard .thumb{width:52px;height:52px;border-radius:16px;display:grid;place-items:center;flex-shrink:0}.hcard .thumb .ic{width:40px;height:40px}
 .hcard.undone{opacity:.6}
+.head.sticky{position:sticky;top:env(safe-area-inset-top,0px);z-index:6;background:var(--bg);margin-inline:calc(-1 * max(16px, env(safe-area-inset-left,0px)));padding-inline:max(16px, env(safe-area-inset-left,0px))}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
+.backpill{height:44px;border-radius:22px;padding:0 16px 0 10px;display:inline-flex;align-items:center;gap:6px;background:var(--surface);color:var(--ink);box-shadow:0 3px 0 var(--line);font-family:var(--display);font-weight:600;font-size:16px}
 .hunger{display:flex;flex-direction:column;gap:10px;padding:12px 14px}
 .hunger .bowl{flex-shrink:0;overflow:visible}
 .hunger .mound{transform-box:view-box;transform-origin:24px 17px;transform:scaleY(var(--s));transition:transform .3s cubic-bezier(.34,1.56,.64,1)}
@@ -867,10 +867,6 @@ function savedMatches() {
     .sort((a, b) => (b.hits - a.hits) || (b.pct - a.pct) || ((st.flavour && b.r.flavour === st.flavour) - (st.flavour && a.r.flavour === st.flavour)))
     .slice(0, 3);
 }
-function ringHtml(pct) {
-  const dash = Math.round(132 - 132 * pct / 100); const col = pct === 100 ? 'var(--mint)' : pct >= 60 ? 'var(--sun)' : '#FF6A8E';
-  return `<div class="ring"><svg width="52" height="52" viewBox="0 0 52 52" aria-hidden="true"><circle cx="26" cy="26" r="21" fill="none" stroke="var(--sunk)" stroke-width="6"/><circle class="v" cx="26" cy="26" r="21" fill="none" stroke="${col}" stroke-width="6" stroke-linecap="round" stroke-dasharray="132" stroke-dashoffset="${dash}" transform="rotate(-90 26 26)"/></svg><span>${pct}%</span></div>`;
-}
 
 // ───────────────────────── UI helpers ─────────────────────────
 let toastT = null;
@@ -942,12 +938,10 @@ function viewCraving() {
   h += hungerHtml();
   h += `<div class="card row" style="margin-top:12px"><div class="people">${Array.from({ length: 6 }, (_, k) => SVG.person(k < st.servings ? '#FFC53D' : 'var(--sunk)')).join('')}</div><span class="ff" style="font-size:17px">${st.servings} ${st.servings === 1 ? 'person' : 'people'}</span><div class="row" style="margin-left:auto;gap:6px"><button class="round" style="width:40px;height:40px;background:var(--tint-orange);box-shadow:none" data-act="people" data-d="-1" aria-label="Fewer people">${SVG.minus}</button><button class="round" style="width:40px;height:40px;background:var(--tint-mint);box-shadow:none" data-act="people" data-d="1" aria-label="More people">${SVG.plusS}</button></div></div>`;
   h += `<div style="margin-top:20px"><div class="row" style="margin-bottom:10px">${SVG.clock}<span class="ff" style="font-size:17px">Time I have</span><span class="sub" style="margin-left:auto;font-size:14px">${st.time} min</span></div><div class="row" style="gap:8px">${TIMES.map(t => `<button class="timec ${st.time === t ? 'on' : ''}" data-act="time" data-t="${t}">${t} min</button>`).join('')}</div></div>`;
-  const saved = savedMatches();
-  if (saved.length) h += `<div style="margin-top:22px"><div class="row" style="margin-bottom:10px">${SVG.book}<span class="ff" style="font-size:17px">From your recipes</span></div><div style="display:flex;flex-direction:column;gap:10px">${saved.map(({ r, pct }, i) => `<div class="card rcard" style="animation:rise .4s both;animation-delay:${i * 40}ms"><div class="thumb" style="background:${HERO_BG[r.hero] || '#FFF4DD'}">${icon(r.hero)}</div><div style="flex:1;min-width:0"><div class="ff" style="font-size:16px;line-height:1.1">${esc(r.name)}</div><div class="row" style="gap:6px;margin-top:6px;font-size:12px;color:var(--muted)">${SVG.clock}${r.time} min</div></div>${ringHtml(pct)}<button class="round accent" style="width:44px;height:44px" data-act="openrecipe" data-id="${r.id}" data-from="craving" aria-label="Open ${esc(r.name)}">${SVG.arrow}</button></div>`).join('')}</div></div>`;
   h += `<div style="height:${st.ai ? 90 : 170}px"></div>`;
   h += st.ai
     ? `<div class="stack"><button class="cta prime pulse" data-act="cook">${SVG.flame.replace('width="16" height="16"', 'width="24" height="24"').replace('fill="#FF7A45"', 'fill="#2A1F1A"')}Show me recipes</button></div>`
-    : `<div class="stack"><div class="card warm"><div class="ff" style="font-size:16px">New recipe ideas need AI</div><p class="note" style="margin:4px 0 0;color:inherit">${aiOffMsg()}${saved.length ? ' Your saved recipes above still work.' : ''}</p></div>${aiFixButton()}</div>`;
+    : `<div class="stack"><div class="card warm"><div class="ff" style="font-size:16px">New recipe ideas need AI</div><p class="note" style="margin:4px 0 0;color:inherit">${aiOffMsg()}</p></div>${aiFixButton()}</div>`;
   return h + nav(st.cravingBack || 'fridge');
 }
 function viewOptions() {
@@ -955,6 +949,8 @@ function viewOptions() {
   let h = `<div class="head"><div class="hl"><button class="round" data-act="go" data-to="craving" aria-label="Back">${SVG.back}</button><h1>Pick one</h1></div></div>`;
   if (st.err) h += `<div class="err" style="margin-bottom:12px">${esc(st.err)}</div>`;
   h += `<div style="display:flex;flex-direction:column;gap:12px">${st.options.map((r, i) => { const its = Object.keys(r.uses).map(item).filter(Boolean); const sv = st.recipes.some(x => x.id === r.id); return `<div class="card rcard optcard" style="animation:pop .5s cubic-bezier(.34,1.56,.64,1) both;animation-delay:${i * 90}ms"><button class="optmain" data-act="openopt" data-i="${i}" aria-label="Open ${esc(r.name)}"><div class="thumb" style="background:${HERO_BG[r.hero] || '#FFF4DD'}">${icon(r.hero)}</div><div style="flex:1;min-width:0"><div class="ff" style="font-size:17px;line-height:1.15">${esc(r.name)}</div><div class="row" style="gap:6px;margin-top:6px;font-size:12px;color:var(--muted)">${SVG.clock}${r.time} min · ${esc(FLAV.find(f => f.id === r.flavour)?.label || 'Tasty')}</div><div class="row" style="gap:2px;margin-top:6px">${its.slice(0, 5).map(it => icon(iconOf(it), 'ic').replace('class="ic"', 'style="width:26px;height:26px"')).join('')}${its.length > 5 ? `<span class="sub">+${its.length - 5}</span>` : ''}</div></div></button><div class="optside"><button class="round ${sv ? 'saved' : ''}" style="width:44px;height:44px" data-act="saveopt" data-i="${i}" aria-pressed="${sv}" aria-label="${sv ? 'Remove from Saved' : 'Save recipe'}">${SVG.save(sv)}</button><span class="sub">${sv ? 'Saved' : 'Save'}</span></div></div>`; }).join('')}</div>`;
+  const saved = savedMatches();
+  if (saved.length) h += `<div style="margin-top:22px"><div class="row" style="margin-bottom:10px">${SVG.book}<span class="ff" style="font-size:17px">From your recipes</span></div><div style="display:flex;flex-direction:column;gap:10px">${saved.map(({ r }, i) => `<div class="card rcard" style="animation:rise .4s both;animation-delay:${i * 40}ms"><div class="thumb" style="background:${HERO_BG[r.hero] || '#FFF4DD'}">${icon(r.hero)}</div><div style="flex:1;min-width:0"><div class="ff" style="font-size:16px;line-height:1.1">${esc(r.name)}</div><div class="row" style="gap:6px;margin-top:6px;font-size:12px;color:var(--muted)">${SVG.clock}${r.time} min</div></div><button class="round accent" style="width:44px;height:44px" data-act="openrecipe" data-id="${r.id}" data-from="options" aria-label="Open ${esc(r.name)}">${SVG.arrow}</button></div>`).join('')}</div></div>`;
   h += `<div style="height:90px"></div>`;
   h += `<div class="stack plain"><button class="cta ghost" data-act="more">${icon('dice', 'ic').replace('class="ic"', 'style="width:30px;height:30px"')}More ideas</button></div>`;
   return h;
@@ -1063,7 +1059,8 @@ function viewRecipe() {
   const r = st.recipe; if (!r) { st.screen = 'fridge'; return viewFridge(); }
   const uses = Object.keys(r.uses || {}).map(id => { const it = item(id); const need = r.uses[id]; return { it, need, short: !it || it.qty < need }; }).filter(u => u.it);
   const saved = st.recipes.some(x => x.id === r.id);
-  let h = `<div class="head"><button class="round" data-act="go" data-to="${st.recipeBack || (r.src === 'generated' ? 'options' : 'recipes')}" aria-label="Back">${SVG.back}</button></div>`;
+  const backTo = st.recipeBack || (r.src === 'generated' ? 'options' : 'recipes');
+  let h = `<div class="head sticky"><button class="backpill" data-act="go" data-to="${backTo}">${SVG.back}<span>${{ options: 'Pick one', recipes: 'Recipes', craving: 'Craving', fridge: 'Fridge' }[backTo] || 'Back'}</span></button></div>`;
   h += `<div class="hero" style="background:${HERO_BG[r.hero] || '#FFF4DD'}">${icon(r.hero)}</div>`;
   h += `<h1 style="margin-top:16px;font-size:28px">${esc(r.name)}</h1>`;
   const nut = ['protein', 'carbs', 'fibre'].map(k => { const ok = !!(r.nutrients && r.nutrients[k]) || uses.some(u => catOf(u.it.cat) === k); return `<span class="spill ${ok ? '' : 'dim'}" ${ok ? `style="background:${CATS[k].bg};color:#2A1F1A;box-shadow:none"` : ''}><span class="dot" style="width:8px;height:8px;border-radius:50%;background:${ok ? CATS[k].color : '#D9CFC4'};display:block"></span>${CATS[k].label}</span>`; }).join('');
@@ -1090,7 +1087,7 @@ function viewRecipes() {
   if (st.rtab === 'insta') h += `<div class="card dark row" style="margin-bottom:10px"><div style="flex:1"><div class="ff" style="font-size:17px">Instagram saves</div><div class="sub" style="color:inherit;opacity:.7">Share a reel to your notes, paste the caption here. Direct import isn't possible from Instagram.</div></div><button class="small" style="background:var(--accent)" data-act="importsheet">Paste</button></div>`;
   if (st.rtab === 'cooked') h += historyHtml();
   else if (!list.length) h += `<div class="empty">${icon('rice')}<p>${st.rtab === 'mine' ? 'Recipes you add yourself land here. Tap + to paste or write one.' : st.rtab === 'insta' ? 'Nothing from Instagram yet.' : 'Paste a recipe, a link, or a caption and I\'ll file it.'}</p></div>`;
-  h += `<div style="display:flex;flex-direction:column;gap:10px">${list.map((r, i) => { const pct = r.ingredients ? matchPct(r) : 100; return `<div class="card rcard" style="animation:rise .4s both;animation-delay:${i * 40}ms"><div class="thumb" style="background:${HERO_BG[r.hero] || '#FFF4DD'}">${icon(r.hero)}</div><div style="flex:1;min-width:0"><div class="ff" style="font-size:16px;line-height:1.1">${esc(r.name)}</div><div class="row" style="gap:6px;margin-top:6px;font-size:12px;color:var(--muted)">${SVG.clock}${r.time} min</div></div>${ringHtml(pct)}<button class="round accent" style="width:44px;height:44px" data-act="openrecipe" data-id="${r.id}" aria-label="Open ${esc(r.name)}">${SVG.arrow}</button></div>`; }).join('')}</div>`;
+  h += `<div style="display:flex;flex-direction:column;gap:10px">${list.map((r, i) => { return `<div class="card rcard" style="animation:rise .4s both;animation-delay:${i * 40}ms"><div class="thumb" style="background:${HERO_BG[r.hero] || '#FFF4DD'}">${icon(r.hero)}</div><div style="flex:1;min-width:0"><div class="ff" style="font-size:16px;line-height:1.1">${esc(r.name)}</div><div class="row" style="gap:6px;margin-top:6px;font-size:12px;color:var(--muted)">${SVG.clock}${r.time} min</div></div><button class="round accent" style="width:44px;height:44px" data-act="openrecipe" data-id="${r.id}" aria-label="Open ${esc(r.name)}">${SVG.arrow}</button></div>`; }).join('')}</div>`;
   h += `<div style="display:flex;justify-content:center;margin-top:24px"><button class="spill" data-act="settings">${syncLabel()} · Settings</button></div>`;
   if (st.items.some(i => i.qty > 0)) h += `<div style="height:80px"></div><div class="stack"><button class="cta ink" data-act="surprise">${icon('dice', 'ic').replace('class="ic"', 'style="width:30px;height:30px"')}Surprise me${SVG.arrow}</button></div>`;
   return h + nav('recipes');
@@ -1152,11 +1149,41 @@ const app = document.getElementById('app'), overlay = document.getElementById('o
 function toastHtml() { return st.toast ? `<div class="toast" role="status"><svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="11" fill="#2FBF9B"/><path d="M7 12.5l3.5 3.5L17 9" stroke="#1E1714" stroke-width="2.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>${esc(st.toast)}</div>` : ''; }
 function viewFor() { return { fridge: viewFridge, craving: viewCraving, options: viewOptions, cooking: viewCooking, cooked: viewCooked, gen: viewGen, recipe: viewRecipe, recipes: viewRecipes }[st.screen] || viewFridge; }
 let lastScreen = null;
+// ───────────────────────── back button / back gesture ─────────────────────────
+// Deeper screens get a plain #name history entry, so the phone's back steps through the app
+// instead of leaving it. The two tabs (Fridge, Recipes) are the root and have no hash.
+const HASH = { craving: 'craving', options: 'ideas', recipe: 'recipe', cooking: 'cooked', cooked: 'cooked' };
+const SCREEN_OF = { craving: 'craving', ideas: 'options', recipe: 'recipe', cooked: 'cooked' };
+let navStack = [], pendingScreen = null, lastRoot = 'fridge';
+function clearHash() { try { history.replaceState(null, '', location.pathname + location.search); } catch (e) {} }
+function syncHash() {
+  if (st.screen === 'gen') return;
+  if (st.screen === 'fridge' || st.screen === 'recipes') lastRoot = st.screen;
+  const want = HASH[st.screen] || '', cur = location.hash.slice(1);
+  if (want === cur) return;
+  const idx = want ? navStack.lastIndexOf(want) : -1;
+  const steps = want ? (idx >= 0 ? navStack.length - 1 - idx : 0) : navStack.length;
+  if (steps > 0 && (!want || idx >= 0)) { pendingScreen = st.screen; history.go(-steps); return; }
+  if (!want) { navStack = []; clearHash(); return; }
+  navStack.push(want); location.hash = want;
+}
+window.addEventListener('hashchange', () => {
+  const h = location.hash.slice(1), idx = navStack.lastIndexOf(h);
+  if (!h) navStack = []; else if (idx >= 0) navStack = navStack.slice(0, idx + 1); else navStack.push(h);
+  let target = pendingScreen || SCREEN_OF[h] || lastRoot; pendingScreen = null;
+  if (target === 'cooked' && st.screen === 'cooking') return; // the scene and its summary share one entry
+  // backing out of the cooked summary goes home, never back into the recipe that was just cooked
+  if ((st.screen === 'cooking' || st.screen === 'cooked') && target !== 'cooked') { clearTimeout(cookT); st.cookLog = null; target = lastRoot; }
+  if ((target === 'recipe' && !st.recipe) || (target === 'options' && !(st.options && st.options.length)) || (target === 'cooked' && !st.cookLog)) target = lastRoot;
+  if (target === st.screen) return;
+  st.screen = target; st.err = null; st.sheet = null; render(); window.scrollTo(0, 0);
+});
 function render() {
   app.classList.toggle('calm', st.screen === lastScreen); lastScreen = st.screen;
   app.innerHTML = (DEMO ? demoBar() : '') + viewFor()();
   syncPad();
   overlay.innerHTML = sheetHtml() + toastHtml();
+  syncHash();
 }
 
 const CHK_SVG = '<svg class="chk" width="28" height="28" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="11" fill="#FF7A45" stroke="#FFF6E9" stroke-width="2"/><path d="M7 12.5l3.5 3.5L17 9" stroke="#2A1F1A" stroke-width="2.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>';
